@@ -1,0 +1,4 @@
+name = "Normaliz"
+uuid = "0c79eb54-65aa-11e9-3208-9352110094d3"
+authors = ["Sebastian Gutsche <gutsche@momo.math.rwth-aachen.de>"]
+version = "0.1.0"
