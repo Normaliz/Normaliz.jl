@@ -17,7 +17,7 @@ if !haskey(ENV,"NORMALIZ_LOCAL_DIR")
     cd(joinpath(@__DIR__, "Normaliz"))
     ENV["NO_OPENMP"] = "yes"
     run(`./install_normaliz_with_eantic.sh`)
-    normaliz_local_dir = joinpath("@__DIR__","Normaliz","local")
+    normaliz_local_dir = joinpath(@__DIR__,"Normaliz","local")
 else
     normaliz_local_dir = ENV["NORMALIZ_LOCAL_DIR"]
 end
