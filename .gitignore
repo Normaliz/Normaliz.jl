@@ -1,0 +1,6 @@
+Manifest.toml
+deps/src/CMakeCache.txt
+deps/src/CMakeFiles/
+deps/src/Makefile
+deps/src/cmake_install.cmake
+deps/src/libnormaliz.so
