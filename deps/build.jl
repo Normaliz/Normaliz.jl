@@ -12,7 +12,7 @@ julia_exec = joinpath(Sys.BINDIR , "julia")
 
 run(`git clone --depth=1 https://github.com/Normaliz/Normaliz`)
 cd(joinpath(@__DIR__, "Normaliz"))
-run("./install_normaliz_with_eantic.sh")
+run(`./install_normaliz_with_eantic.sh`)
 normaliz_local_dir = joinpath("@__DIR__","Normaliz","local")
 
 cd(joinpath(@__DIR__, "src"))
