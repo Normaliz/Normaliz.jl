@@ -4,3 +4,4 @@ deps/src/CMakeFiles/
 deps/src/Makefile
 deps/src/cmake_install.cmake
 deps/src/libnormaliz.so
+deps/build.log
