@@ -6,7 +6,7 @@ import CMake
 # Parse some basic command-line arguments
 const verbose = "--verbose" in ARGS
 
-jlcxx_cmake_dir = joinpath(dirname(CxxWrap.jlcxx_path), "cmake", "JlCxx")
+jlcxx_cmake_dir = joinpath(CxxWrap.prefix_path(), "lib", "cmake", "JlCxx")
 
 julia_exec = joinpath(Sys.BINDIR , "julia")
 
