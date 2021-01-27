@@ -15,7 +15,6 @@ normaliz_local_dir=""
 if !haskey(ENV,"NORMALIZ_LOCAL_DIR")
     run(`git clone --depth=1 https://github.com/Normaliz/Normaliz`)
     cd(joinpath(@__DIR__, "Normaliz"))
-    ENV["NO_OPENMP"] = "yes"
     run(`./install_normaliz_with_eantic.sh`)
     normaliz_local_dir = joinpath(@__DIR__,"Normaliz","local")
 else
