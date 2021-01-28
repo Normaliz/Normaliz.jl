@@ -8,7 +8,7 @@ using std::endl;
 #include "jlcxx/jlcxx.hpp"
 
 #include <libnormaliz/cone.h>
-#include <libnormaliz/map_operations.h>
+#include <libnormaliz/list_and_map_operations.h>
 #include <libnormaliz/vector_operations.h>
 using libnormaliz::Cone;
 // using libnormaliz::ConeProperty;
