@@ -122,7 +122,8 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
 #ifdef ENFNORMALIZ
                 Matrix<renf_elem_class>,
 #endif
-                Matrix<int64_t>
+                Matrix<long>,
+                Matrix<long long>
             >([](auto wrapped) {
             typedef typename decltype(wrapped)::type            WrappedT;
             typedef typename decltype(wrapped)::type::elem_type elemType;

@@ -23,17 +23,16 @@ jobs:
       matrix:
         julia-version:
           - '1.6'  # current LTS
-          #- '~1.7.0-0'
-          #- '~1.8.0-0'
+          - 1      # latest stable release
           #- 'nightly'
         os:
           - ubuntu-latest
-        #include:
+        include:
           # Add a few windows and macOS jobs (not too many, the number we can run in parallel is limited)
-          #- os: macOS-latest
-          #  julia-version: '1.6'
-          #- os: windows-latest
-          #  julia-version: '1.6'
+          - julia-version: '1.6'
+            os: macOS-latest
+          #- julia-version: '1.6'
+          #  os: windows-latest
 
     steps:
       - uses: actions/checkout@v3
@@ -46,9 +45,6 @@ jobs:
         uses: julia-actions/setup-julia@v1
         with:
           version: ${{ matrix.julia-version }}
-
-      - name: "Install boost (for e-antic)"
-        run: sudo apt-get install libboost-all-dev
 
       - name: "Cache artifacts"
         uses: actions/cache@v3
