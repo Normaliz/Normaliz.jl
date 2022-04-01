@@ -62,6 +62,12 @@ jobs:
             ${{ runner.os }}-test-
             ${{ runner.os }}-
 
+      # Setup ccache, to speed up repeated compilation of the same binaries
+      - name: "Setup ccache"
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          update_packager_index: false
+
       - name: "Build package"
         uses: julia-actions/julia-buildpkg@latest
 
