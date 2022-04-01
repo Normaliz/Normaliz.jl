@@ -16,21 +16,24 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${JlCxx_location}")
 
-SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${normaliz_include}" )
-SET( CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${normaliz_lib}" )
+include_directories(${gmp_prefix}/include)
+include_directories(${normaliz_prefix}/include)
+include_directories(${mpfr_prefix}/include)
+include_directories(${nauty_prefix}/include)
+include_directories(${flint_prefix}/include)
 
 add_library(normaliz_julia SHARED normaliz.cpp)
 
 target_link_libraries(normaliz_julia
     JlCxx::cxxwrap_julia
     JlCxx::cxxwrap_julia_stl
-    "-lnormaliz"
-    "-leanticxx"
-    "-leantic"
-    "-lantic"
-    "-larb"
-    "-lflint"
-    "-lgmp"
+    ${libnormaliz_path}
+    ${libflint_path}
+    ${libmpfr_path}
+    ${libnauty_path}
+    ${libgmp_path}
+    ${libgmpxx_path}
+    ${libomp_path}
     )
 
 install(TARGETS

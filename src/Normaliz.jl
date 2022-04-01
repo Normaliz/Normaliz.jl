@@ -1,6 +1,7 @@
 module Normaliz
 
 import Libdl
+import normaliz_jll
 
 using CxxWrap
 
