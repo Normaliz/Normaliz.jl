@@ -1,7 +1,5 @@
 using CxxWrap
-using Base.Filesystem
-import Pkg
-import CMake
+import CMake_jll
 
 # Parse some basic command-line arguments
 const verbose = "--verbose" in ARGS
@@ -23,11 +21,42 @@ else
     normaliz_local_dir = ENV["NORMALIZ_LOCAL_DIR"]
 end
 
-include_path = "-I"*joinpath(normaliz_local_dir,"include")
+include_path = joinpath(normaliz_local_dir,"include")
 lib_path = joinpath(normaliz_local_dir,"lib")
-lib_path = "-L"*lib_path*" -Wl,-R"*lib_path
 
+# basic compiler and linker flags
+include_flags = "-I$include_path"
+lib_flags = "-L$lib_path"
+#lib_flags *= " -Wl,-R$lib_path"
+
+# honor GMP_INSTALLDIR
+gmpdir = get(ENV, "GMP_INSTALLDIR", nothing)
+if gmpdir !== nothing
+    include_flags *= " -I$gmpdir/include"
+    lib_flags *= " -L$gmpdir/lib"
+end
 
 cd(joinpath(@__DIR__, "src"))
-run(`$(CMake.cmake) -DJulia_EXECUTABLE=$julia_exec -DJlCxx_DIR=$jlcxx_cmake_dir -Dnormaliz_include=$include_path -Dnormaliz_lib=$lib_path -DCMAKE_INSTALL_LIBDIR=lib .`)
-run(`make VERBOSE=1 -j$(div(Sys.CPU_THREADS,2))`)
+
+builddir = "build"
+rm(builddir; force=true, recursive=true)
+
+CMake_jll.cmake() do exe
+  run(`$exe --version`)
+  run(`$exe
+      -DJulia_EXECUTABLE=$julia_exec
+      -DJlCxx_DIR=$jlcxx_cmake_dir
+      -Dnormaliz_include=$include_flags
+      -Dnormaliz_lib=$lib_flags
+      -DCMAKE_INSTALL_LIBDIR=lib
+      -B $(builddir)
+      -S .
+  `)
+  run(`$exe
+      --build $(builddir)
+      --config Release
+      --
+      -j$(div(Sys.CPU_THREADS,2))
+  `)
+
+end

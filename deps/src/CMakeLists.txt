@@ -7,10 +7,10 @@ find_package(JlCxx REQUIRED)
 include_directories(${JlCxx_DIR}/../../../include/)
 
 SET( CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} ${normaliz_include} -std=c++14" )
-SET( CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${normaliz_lib} -lnormaliz" )
+SET( CMAKE_SHARED_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} ${normaliz_lib} -lnormaliz -leanticxx -leantic -lantic -larb -lflint -lgmp " )
 
 add_library(normaliz SHARED normaliz.cpp)
-target_link_libraries(normaliz JlCxx::cxxwrap_julia "-lnormaliz")
+target_link_libraries(normaliz JlCxx::cxxwrap_julia JlCxx::cxxwrap_julia_stl "-lnormaliz")
 
 install(TARGETS
   normaliz
