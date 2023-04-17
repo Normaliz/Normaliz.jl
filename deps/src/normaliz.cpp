@@ -18,6 +18,10 @@ using libnormaliz::Type::InputType;
 #include <libnormaliz/matrix.h>
 using libnormaliz::Matrix;
 
+using libnormaliz::renf_class;
+using libnormaliz::renf_elem_class;
+
+
 #include <vector>
 using std::map;
 using std::pair;

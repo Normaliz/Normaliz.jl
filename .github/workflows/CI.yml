@@ -1,0 +1,120 @@
+name: Run tests
+
+on:
+  push:
+    branches:
+      - 'master'
+      - 'release-'
+    tags: '*'
+  pull_request:
+
+concurrency:
+  # group by workflow and ref; the last slightly strange component ensures that for pull
+  # requests, we limit to 1 concurrent job, but for the master branch we don't
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.ref != 'refs/heads/master' || github.run_number }}
+  # Cancel intermediate builds, but only if it is a pull request build.
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        julia-version:
+          - '1.6'  # current LTS
+          #- '~1.7.0-0'
+          #- '~1.8.0-0'
+          #- 'nightly'
+        os:
+          - ubuntu-latest
+        #include:
+          # Add a few windows and macOS jobs (not too many, the number we can run in parallel is limited)
+          #- os: macOS-latest
+          #  julia-version: '1.6'
+          #- os: windows-latest
+          #  julia-version: '1.6'
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # For Codecov, we must also fetch the parent of the HEAD commit to
+          # be able to properly deal with PRs / merges
+          fetch-depth: 2
+
+      - name: "Set up Julia"
+        uses: julia-actions/setup-julia@v1
+        with:
+          version: ${{ matrix.julia-version }}
+
+      - name: "Install boost (for e-antic)"
+        run: sudo apt-get install libboost-all-dev
+
+      - name: "Cache artifacts"
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-artifacts
+        with:
+          path: ~/.julia/artifacts
+          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-test-${{ env.cache-name }}-
+            ${{ runner.os }}-test-
+            ${{ runner.os }}-
+
+      # Setup ccache, to speed up repeated compilation of the same binaries
+      - name: "Setup ccache"
+        uses: Chocobo1/setup-ccache-action@v1
+        with:
+          update_packager_index: false
+
+      - name: "Build package"
+        uses: julia-actions/julia-buildpkg@latest
+
+      - name: "Run tests"
+        uses: julia-actions/julia-runtest@latest
+
+      #- name: "Run doctests"
+      #  if: ${{ matrix.julia-version == '1.6' }}
+      #  run: |
+      #    julia --project=docs --color=yes --code-coverage -e '
+      #      using Pkg
+      #      Pkg.develop(PackageSpec(path=pwd()))
+      #      Pkg.instantiate()
+      #      using Documenter: doctest
+      #      using Normaliz
+      #      doctest(Normaliz)'
+
+      - name: "Process code coverage"
+        continue-on-error: true
+        uses: julia-actions/julia-processcoverage@v1
+
+      - name: "Upload coverage data to Codecov"
+        continue-on-error: true
+        uses: codecov/codecov-action@v3
+
+#  docs:
+#    name: Documentation
+#    runs-on: ubuntu-latest
+#    steps:
+#      - uses: actions/checkout@v3
+#      - uses: julia-actions/setup-julia@v1
+#        with:
+#          version: '1.6'
+#      - name: Cache artifacts
+#        uses: actions/cache@v3
+#        env:
+#          cache-name: cache-artifacts
+#        with:
+#          path: ~/.julia/artifacts
+#          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+#          restore-keys: |
+#            ${{ runner.os }}-test-${{ env.cache-name }}-
+#            ${{ runner.os }}-test-
+#            ${{ runner.os }}-
+#      - uses: julia-actions/julia-buildpkg@latest
+#      - uses: julia-actions/julia-docdeploy@latest
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#          DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
+#
