@@ -120,7 +120,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                 Matrix<mpq_class>,
                 Matrix<mpz_class>,
                 Matrix<renf_elem_class>,
-                Matrix<long long>
+                Matrix<int64_t>
             >([](auto wrapped) {
             typedef typename decltype(wrapped)::type            WrappedT;
             typedef typename decltype(wrapped)::type::elem_type elemType;
@@ -150,7 +150,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                 nmzvecmat<mpq_class>,
                 nmzvecmat<mpz_class>,
                 nmzvecmat<renf_elem_class>,
-                nmzvecmat<long long>
+                nmzvecmat<int64_t>
             >(
             [](auto wrapped) {
                 typedef typename decltype(wrapped)::type WrappedT;
@@ -175,7 +175,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
         .apply<
                 Cone<mpz_class>,
                 Cone<renf_elem_class>,
-                Cone<long long>
+                Cone<int64_t>
             >(
             [](auto wrapped) {
                 typedef typename decltype(wrapped)::type WrappedT;
@@ -225,7 +225,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
         return Cone<mpz_class>(to_normaliz_matrix<mpq_class>(input_dict));
     });
     normaliz.method("LongCone", [](jl_value_t* input_dict) {
-        return Cone<long long>(to_normaliz_matrix<mpq_class>(input_dict));
+        return Cone<int64_t>(to_normaliz_matrix<mpq_class>(input_dict));
     });
     normaliz.method("RenfCone", [](jl_value_t* input_dict) {
         return Cone<renf_elem_class>(to_normaliz_matrix<renf_elem_class>(input_dict));

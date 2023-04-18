@@ -1,6 +1,14 @@
 using Test
 using Normaliz
 
+@testset "basic NmzMatrix tests" begin
+  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
+
+  xx = Normaliz.NmzMatrix{Normaliz.NmzInteger}([1 2 ; 3 5])
+
+  xx = Normaliz.NmzMatrix{Int}([1 2 ; 3 5])
+end
+
 @testset "basic LongCone test" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
   yy = Normaliz.LongCone( Dict( :cone => xx ) )
