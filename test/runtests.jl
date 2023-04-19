@@ -9,16 +9,16 @@ using Normaliz
   xx = Normaliz.NmzMatrix{Int}([1 2 ; 3 5])
 end
 
-@testset "basic LongCone test" begin
+@testset "basic LongLongCone test" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
-  yy = Normaliz.LongCone( Dict( :cone => xx ) )
+  yy = Normaliz.LongLongCone( Dict( :cone => xx ) )
   Normaliz.get_matrix_cone_property( yy, "ExtremeRays" )
   Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
 end
 
-@testset "basic IntCone test" begin
+@testset "basic GMPCone test" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
-  yy = Normaliz.IntCone( Dict( :cone => xx ) )
+  yy = Normaliz.GMPCone( Dict( :cone => xx ) )
   Normaliz.get_matrix_cone_property( yy, "ExtremeRays" )
   Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
 end
