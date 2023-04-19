@@ -23,15 +23,14 @@ jobs:
       matrix:
         julia-version:
           - '1.6'  # current LTS
-          #- '~1.7.0-0'
-          #- '~1.8.0-0'
+          - '1.8'  # latest stable release
           #- 'nightly'
         os:
           - ubuntu-latest
-        #include:
+        include:
           # Add a few windows and macOS jobs (not too many, the number we can run in parallel is limited)
-          #- os: macOS-latest
-          #  julia-version: '1.6'
+          - os: macOS-latest
+            julia-version: '1.6'
           #- os: windows-latest
           #  julia-version: '1.6'
 
@@ -48,7 +47,12 @@ jobs:
           version: ${{ matrix.julia-version }}
 
       - name: "Install boost (for e-antic)"
-        run: sudo apt-get install libboost-all-dev
+        run: |
+          if [ "$RUNNER_OS" == "Linux" ]; then
+              sudo apt-get install libboost-all-dev
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+              brew install autoconf automake boost gmp libtool
+          fi
 
       - name: "Cache artifacts"
         uses: actions/cache@v3
