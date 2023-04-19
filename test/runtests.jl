@@ -16,11 +16,44 @@ end
   Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
 end
 
+@testset "Second LongCone test" begin
+  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
+  gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
+  yy = Normaliz.LongCone( Dict( :cone => xx, :grading => gg ) )
+  Normaliz.get_rational_cone_property(yy, "Multiplicity")
+  Normaliz.get_boolean_cone_property(yy, "IsIntegrallyClosed")
+  Normaliz.get_vector_cone_property( yy, "Grading" )
+  Normaliz.get_matrix_cone_property( yy, "Deg1Elements" )
+  Normaliz.get_matrix_cone_property( yy, "HilbertBasis" )
+  Normaliz.get_matrix_cone_property( yy, "ModuleGeneratorsOverOriginalMonoid" )
+  Normaliz.get_matrix_cone_property( yy, "MaximalSubspace" )
+  Normaliz.get_matrix_cone_property( yy, "MarkovBasis" )
+  Normaliz.get_vector_cone_property( yy, "WitnessNotIntegrallyClosed" )
+  Normaliz.get_integer_cone_property( yy, "TriangulationDetSum" )
+  Normaliz.get_gmp_integer_cone_property( yy, "ExternalIndex" )
+  Normaliz.get_float_cone_property( yy, "EuclideanVolume" )
+  Normaliz.get_machine_integer_cone_property( yy, "EmbeddingDim" )
+  Normaliz.get_boolean_cone_property(yy, "IsDeg1HilbertBasis")
+end
+
 @testset "basic IntCone test" begin
-  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
-  yy = Normaliz.IntCone( Dict( :cone => xx ) )
-  Normaliz.get_matrix_cone_property( yy, "ExtremeRays" )
-  Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
+  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
+  gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
+  yy = Normaliz.LongCone( Dict( :cone => xx, :grading => gg ) )
+  Normaliz.get_rational_cone_property(yy, "Multiplicity")
+  Normaliz.get_boolean_cone_property(yy, "IsIntegrallyClosed")
+  Normaliz.get_vector_cone_property( yy, "Grading" )
+  Normaliz.get_matrix_cone_property( yy, "Deg1Elements" )
+  Normaliz.get_matrix_cone_property( yy, "HilbertBasis" )
+  Normaliz.get_matrix_cone_property( yy, "ModuleGeneratorsOverOriginalMonoid" )
+  Normaliz.get_matrix_cone_property( yy, "MaximalSubspace" )
+  Normaliz.get_matrix_cone_property( yy, "MarkovBasis" )
+  Normaliz.get_vector_cone_property( yy, "WitnessNotIntegrallyClosed" )
+  Normaliz.get_integer_cone_property( yy, "TriangulationDetSum" )
+  Normaliz.get_gmp_integer_cone_property( yy, "ExternalIndex" )
+  Normaliz.get_float_cone_property( yy, "EuclideanVolume" )
+  Normaliz.get_machine_integer_cone_property( yy, "EmbeddingDim" )
+  Normaliz.get_boolean_cone_property(yy, "IsDeg1HilbertBasis")
 end
 
 # TODO: reactivate these tests once Renf support is back

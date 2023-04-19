@@ -12,10 +12,10 @@ normaliz_local_dir=""
 
 if !haskey(ENV,"NORMALIZ_LOCAL_DIR")
     normaliz_dir = joinpath(@__DIR__, "Normaliz")
-    isdir(normaliz_dir) && rm(normaliz_dir, recursive=true)
-    run(`git clone --depth=1 https://github.com/Normaliz/Normaliz`)
-    cd(normaliz_dir)
-    run(`./install_normaliz_with_eantic.sh`)
+    # isdir(normaliz_dir) && rm(normaliz_dir, recursive=true)
+    # run(`git clone --depth=1 https://github.com/Normaliz/Normaliz`)
+    # cd(normaliz_dir)
+    # run(`./install_normaliz_with_eantic.sh`)
     normaliz_local_dir = joinpath(@__DIR__,"Normaliz","local")
 else
     normaliz_local_dir = ENV["NORMALIZ_LOCAL_DIR"]
