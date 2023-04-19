@@ -53,6 +53,7 @@ to_normaliz_matrix(jl_value_t* input_dict)
     return input_map;
 }
 
+#ifdef ENFNORMALIZ
 std::string write_renf(renf_class& renf)
 {
     std::string output = "Real embedded number field: ";
@@ -65,7 +66,7 @@ std::string write_renf(renf_class& renf)
     flint_free(res1);
     return output;
 }
-
+#endif
 
 JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
 {
@@ -84,6 +85,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
 
     jlcxx::stl::apply_stl<mpq_class>(normaliz);
 
+#ifdef ENFNORMALIZ
     normaliz.add_type<renf_class>("RenfClass")
 #if 0
         .method("renf_class_construct",[](const std::string & minpoly, const std::string & gen, const std::string &emb, int prec) {
@@ -112,6 +114,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
         })
 #endif
         ;
+#endif
 
     normaliz
         .add_type<jlcxx::Parametric<jlcxx::TypeVar<1>>>(
@@ -119,7 +122,9 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
         .apply<
                 Matrix<mpq_class>,
                 Matrix<mpz_class>,
+#ifdef ENFNORMALIZ
                 Matrix<renf_elem_class>,
+#endif
                 Matrix<int64_t>
             >([](auto wrapped) {
             typedef typename decltype(wrapped)::type            WrappedT;
@@ -149,7 +154,9 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
         .apply<
                 nmzvecmat<mpq_class>,
                 nmzvecmat<mpz_class>,
+#ifdef ENFNORMALIZ
                 nmzvecmat<renf_elem_class>,
+#endif
                 nmzvecmat<int64_t>
             >(
             [](auto wrapped) {
@@ -174,7 +181,9 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
     normaliz.add_type<jlcxx::Parametric<jlcxx::TypeVar<1>>>("Cone")
         .apply<
                 Cone<mpz_class>,
+#ifdef ENFNORMALIZ
                 Cone<renf_elem_class>,
+#endif
                 Cone<int64_t>
             >(
             [](auto wrapped) {
@@ -227,7 +236,9 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
     normaliz.method("LongCone", [](jl_value_t* input_dict) {
         return Cone<int64_t>(to_normaliz_matrix<mpq_class>(input_dict));
     });
+#ifdef ENFNORMALIZ
     normaliz.method("RenfCone", [](jl_value_t* input_dict) {
         return Cone<renf_elem_class>(to_normaliz_matrix<renf_elem_class>(input_dict));
     });
+#endif
 }
