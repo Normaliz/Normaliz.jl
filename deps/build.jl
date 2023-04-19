@@ -31,7 +31,7 @@ compiler_flags = [
 linker_flags = [
     "-L$lib_path",
     # setup rpath so that right copy of libnormaliz is found and linked:
-    "-Wl,-rpath,$lib_path/lib"
+    "-Wl,-rpath,$lib_path"
     ]
 
 # honor GMP_INSTALLDIR
