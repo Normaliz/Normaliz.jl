@@ -65,3 +65,6 @@ CMake_jll.cmake() do exe
   `)
 
 end
+
+# force new precompilation
+touch(joinpath(@__DIR__, "..", "src", "Normaliz.jl"))
