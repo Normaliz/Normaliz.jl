@@ -70,16 +70,13 @@ std::string write_renf(renf_class& renf)
 
 JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
 {
-
     normaliz.add_type<mpz_class>("NmzInteger")
-        .constructor<int>()
         .constructor<long>()
         .method("to_string", [](mpz_class& i) { return i.get_str(); });
 
     jlcxx::stl::apply_stl<mpz_class>(normaliz);
 
     normaliz.add_type<mpq_class>("NmzRational")
-        .constructor<int, int>()
         .constructor<long, long>()
         .method("to_string", [](mpq_class& i) { return i.get_str(); });
 
@@ -131,7 +128,6 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
             typedef typename decltype(wrapped)::type::elem_type elemType;
 
             wrapped.template constructor<int64_t, int64_t>();
-            wrapped.template constructor<int32_t, int32_t>();
             wrapped.method("_getindex",
                            [](WrappedT& mat, int64_t i, int64_t j) {
                                return mat[i - 1][j - 1];
