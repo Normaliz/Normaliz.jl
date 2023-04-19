@@ -25,29 +25,34 @@ include_path = joinpath(normaliz_local_dir,"include")
 lib_path = joinpath(normaliz_local_dir,"lib")
 
 # basic compiler and linker flags
-include_flags = "-I$include_path"
-lib_flags = "-L$lib_path"
-#lib_flags *= " -Wl,-R$lib_path"
+compiler_flags = [
+    "-I$include_path",
+    ]
+linker_flags = [
+    "-L$lib_path",
+    # setup rpath so that right copy of libnormaliz is found and linked:
+    "-Wl,-rpath,$lib_path/lib"
+    ]
 
 # honor GMP_INSTALLDIR
 gmpdir = get(ENV, "GMP_INSTALLDIR", nothing)
 if gmpdir !== nothing
-    include_flags *= " -I$gmpdir/include"
-    lib_flags *= " -L$gmpdir/lib"
+    push!(compiler_flags, "-I$gmpdir/include")
+    push!(linker_flags, "-L$gmpdir/lib")
 end
 
 cd(joinpath(@__DIR__, "src"))
-
 builddir = "build"
+
+# delete any previous build, so we rebuild from scratch
 rm(builddir; force=true, recursive=true)
 
 CMake_jll.cmake() do exe
-  run(`$exe --version`)
   run(`$exe
       -DJulia_EXECUTABLE=$julia_exec
       -DJlCxx_DIR=$jlcxx_cmake_dir
-      -Dnormaliz_include=$include_flags
-      -Dnormaliz_lib=$lib_flags
+      -Dnormaliz_include=$(join(compiler_flags, " "))
+      -Dnormaliz_lib=$(join(linker_flags, " "))
       -DCMAKE_INSTALL_LIBDIR=lib
       -B $(builddir)
       -S .
