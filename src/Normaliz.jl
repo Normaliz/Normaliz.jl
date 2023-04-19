@@ -49,8 +49,9 @@ end
 #    return vec
 #end
 
-Cone{NmzInteger}(args...) = IntCone(args...)
-Cone{Int64}(args...)      = LongCone(args...)
+Cone{NmzInteger}(args...) = GMPCone(args...)
+Cone{BigInt}(args...)     = GMPCone(args...)
+Cone{Int64}(args...)      = LongLongCone(args...)
 
 @static if @isdefined Renf
   include("renf.jl")

@@ -226,10 +226,10 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                                });
             });
 
-    normaliz.method("IntCone", [](jl_value_t* input_dict) {
+    normaliz.method("GMPCone", [](jl_value_t* input_dict) {
         return Cone<mpz_class>(to_normaliz_matrix<mpq_class>(input_dict));
     });
-    normaliz.method("LongCone", [](jl_value_t* input_dict) {
+    normaliz.method("LongLongCone", [](jl_value_t* input_dict) {
         return Cone<long long>(to_normaliz_matrix<mpq_class>(input_dict));
     });
 #ifdef ENFNORMALIZ
