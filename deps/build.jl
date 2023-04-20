@@ -5,8 +5,7 @@ import CMake_jll
 const verbose = "--verbose" in ARGS
 
 jlcxx_cmake_dir = joinpath(CxxWrap.prefix_path(), "lib", "cmake", "JlCxx")
-
-julia_exec = joinpath(Sys.BINDIR , "julia")
+julia_exec = joinpath(Sys.BINDIR, Base.julia_exename())
 
 normaliz_local_dir=""
 
@@ -30,8 +29,6 @@ compiler_flags = [
     ]
 linker_flags = [
     "-L$lib_path",
-    # setup rpath so that right copy of libnormaliz is found and linked:
-    "-Wl,-rpath,$lib_path"
     ]
 
 # honor GMP_INSTALLDIR
@@ -51,9 +48,9 @@ CMake_jll.cmake() do exe
   run(`$exe
       -DJulia_EXECUTABLE=$julia_exec
       -DJlCxx_DIR=$jlcxx_cmake_dir
+      -DCMAKE_BUILD_TYPE=Release
       -Dnormaliz_include=$(join(compiler_flags, " "))
       -Dnormaliz_lib=$(join(linker_flags, " "))
-      -DCMAKE_INSTALL_LIBDIR=lib
       -B $(builddir)
       -S .
   `)
