@@ -11,11 +11,9 @@ To use Normaliz.jl we require Julia 1.6 or higher. Please see
 <https://julialang.org/downloads/> for instructions on
 how to obtain julia for your system.
 
-At the Julia prompt simply type
-
-```
-julia> using Pkg
-julia> Pkg.add("Normaliz")
+To install this package, enter this into the Julia prompt:
+```julia
+using Pkg; Pkg.develop(url="https://github.com/Normaliz/Normaliz.jl")
 ```
 
 Here is an example of using Normaliz.jl:

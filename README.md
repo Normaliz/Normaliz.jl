@@ -12,9 +12,9 @@ lattice polytopes, and rational cones.
 
 ## Install
 
-To install this package in Julia:
-```
-using Pkg; Pkg.add("Normaliz")
+To install this package, enter this into the Julia prompt:
+```julia
+using Pkg; Pkg.develop(url="https://github.com/Normaliz/Normaliz.jl")
 ```
 
 ## Basic usage
