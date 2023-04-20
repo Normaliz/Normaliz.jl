@@ -180,7 +180,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
 #ifdef ENFNORMALIZ
                 Cone<renf_elem_class>,
 #endif
-                Cone<int64_t>
+                Cone<long long>
             >(
             [](auto wrapped) {
                 typedef typename decltype(wrapped)::type WrappedT;
@@ -230,7 +230,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
         return Cone<mpz_class>(to_normaliz_matrix<mpq_class>(input_dict));
     });
     normaliz.method("LongCone", [](jl_value_t* input_dict) {
-        return Cone<int64_t>(to_normaliz_matrix<mpq_class>(input_dict));
+        return Cone<long long>(to_normaliz_matrix<mpq_class>(input_dict));
     });
 #ifdef ENFNORMALIZ
     normaliz.method("RenfCone", [](jl_value_t* input_dict) {
