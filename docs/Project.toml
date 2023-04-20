@@ -1,0 +1,6 @@
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+Normaliz = "0c79eb54-65aa-11e9-3208-9352110094d3"
+
+[compat]
+Documenter = "0.27"
