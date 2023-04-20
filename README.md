@@ -1,6 +1,6 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://normaliz.github.io/Normaliz.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://normaliz.github.io/Normaliz.jl/dev)
-[![Build Status](https://github.com/Normaliz/Normaliz.jl/workflows/CI/badge.svg)](https://github.com/Normaliz/Normaliz.jl/actions?query=workflow%3A%22CI%22+branch%3Amaster)
+[![Build Status](https://github.com/Normaliz/Normaliz.jl/actions/workflows/CI.yml/badge.svg)](https://github.com/Normaliz/Normaliz.jl/actions/workflows/CI.yml)
 [![Codecov](https://codecov.io/github/Normaliz/Normaliz.jl/coverage.svg?branch=master&token=)](https://codecov.io/gh/Normaliz/Normaliz.jl)
 
 # Normaliz.jl Julia package
