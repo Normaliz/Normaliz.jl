@@ -9,13 +9,6 @@ using Normaliz
   xx = Normaliz.NmzMatrix{Int}([1 2 ; 3 5])
 end
 
-@testset "basic LongCone test" begin
-  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
-  yy = Normaliz.LongCone( Dict( :cone => xx ) )
-  Normaliz.get_matrix_cone_property( yy, "ExtremeRays" )
-  Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
-end
-
 @testset "Second LongCone test" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
   gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
@@ -54,6 +47,12 @@ end
   Normaliz.get_float_cone_property( yy, "EuclideanVolume" )
   Normaliz.get_machine_integer_cone_property( yy, "EmbeddingDim" )
   Normaliz.get_boolean_cone_property(yy, "IsDeg1HilbertBasis")
+
+@testset "basic GMPCone test" begin
+  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
+  yy = Normaliz.GMPCone( Dict( :cone => xx ) )
+  Normaliz.get_matrix_cone_property( yy, "ExtremeRays" )
+  Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
 end
 
 # TODO: reactivate these tests once Renf support is back

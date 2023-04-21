@@ -1,10 +1,11 @@
 module Normaliz
 
 import Libdl
+import normaliz_jll
 
 using CxxWrap
 
-const libnormaliz_julia_path = joinpath(@__DIR__, "..", "deps", "src", "build", "libnormaliz_julia.$(Libdl.dlext)")
+const libnormaliz_julia_path = joinpath(@__DIR__, "..", "deps", "src", "build", "lib", "libnormaliz_julia.$(Libdl.dlext)")
 @wrapmodule(libnormaliz_julia_path, :define_module_normaliz)
 
 function __init__()
@@ -49,8 +50,9 @@ end
 #    return vec
 #end
 
-Cone{NmzInteger}(args...) = IntCone(args...)
-Cone{Int64}(args...)      = LongCone(args...)
+Cone{NmzInteger}(args...) = GMPCone(args...)
+Cone{BigInt}(args...)     = GMPCone(args...)
+Cone{Int64}(args...)      = LongLongCone(args...)
 
 @static if @isdefined Renf
   include("renf.jl")
