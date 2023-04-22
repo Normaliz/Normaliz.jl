@@ -4,16 +4,10 @@ version = "0.1.0"
 
 [deps]
 CMake_jll = "3f4e10e2-61f2-5801-8945-23b9d642d0e6"
-CompilerSupportLibraries_jll = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 CxxWrap = "1f15a43c-97ca-5a2a-ae31-89f07a497df4"
-FLINT_jll = "e134572f-a0d5-539d-bddf-3cad8db41a82"
-GMP_jll = "781609d7-10c4-51f6-84f2-b8444358ff6d"
-LLVMOpenMP_jll = "1d63c593-3942-5779-bab2-d838dc0a180e"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
-MPFR_jll = "3a97d323-0669-5f0c-9066-3539efd106a3"
 Nemo = "2edaba10-b0f1-5616-af89-8c11ac63239a"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-nauty_jll = "55c6dc9b-343a-50ca-8ff2-b71adb3733d5"
 normaliz_jll = "6690c6e9-4e12-53b8-b8fd-4bffaef8839f"
 
 [compat]
