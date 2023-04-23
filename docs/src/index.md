@@ -18,7 +18,7 @@ using Pkg; Pkg.develop(url="https://github.com/Normaliz/Normaliz.jl")
 
 Here is an example of using Normaliz.jl:
 
-```julia
+```jldoctest
 julia> using Normaliz
 
 julia> xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
