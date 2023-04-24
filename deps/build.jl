@@ -1,13 +1,8 @@
 using CxxWrap
 import CMake_jll
-using Pkg
 using Pkg.Artifacts
 
 using normaliz_jll
-using GMP_jll
-using FLINT_jll
-using MPFR_jll
-using nauty_jll
 
 # Parse some basic command-line arguments
 const verbose = "--verbose" in ARGS
@@ -42,11 +37,11 @@ builddir = "build"
 rm(builddir; force=true, recursive=true)
 
 @static if Sys.isbsd()
-  using LLVMOpenMP_jll
-  libomp_path = LLVMOpenMP_jll.get_libomp_path()
+  using normaliz_jll.LLVMOpenMP_jll
+  libomp_path = normaliz_jll.LLVMOpenMP_jll.get_libomp_path()
 else
-  using CompilerSupportLibraries_jll
-  libomp_path = CompilerSupportLibraries_jll.get_libgomp_path()
+  using normaliz_jll.CompilerSupportLibraries_jll
+  libomp_path = normaliz_jll.CompilerSupportLibraries_jll.get_libgomp_path()
 end
 
 CMake_jll.cmake() do exe
@@ -55,16 +50,16 @@ CMake_jll.cmake() do exe
       -DJlCxx_DIR=$jlcxx_cmake_dir
       -DCMAKE_BUILD_TYPE=Release
       -Dnormaliz_prefix=$(jll_artifact_dir(normaliz_jll))
-      -Dgmp_prefix=$(jll_artifact_dir(GMP_jll))
-      -Dmpfr_prefix=$(jll_artifact_dir(MPFR_jll))
-      -Dnauty_prefix=$(jll_artifact_dir(nauty_jll))
-      -Dflint_prefix=$(jll_artifact_dir(FLINT_jll))
+      -Dgmp_prefix=$(jll_artifact_dir(normaliz_jll.GMP_jll))
+      -Dmpfr_prefix=$(jll_artifact_dir(normaliz_jll.MPFR_jll))
+      -Dnauty_prefix=$(jll_artifact_dir(normaliz_jll.nauty_jll))
+      -Dflint_prefix=$(jll_artifact_dir(normaliz_jll.FLINT_jll))
       -Dlibnormaliz_path=$(normaliz_jll.get_libnormaliz_path())
-      -Dlibgmp_path=$(GMP_jll.get_libgmp_path())
-      -Dlibgmpxx_path=$(GMP_jll.get_libgmpxx_path())
-      -Dlibmpfr_path=$(MPFR_jll.get_libmpfr_path())
-      -Dlibnauty_path=$(nauty_jll.get_libnauty_path())
-      -Dlibflint_path=$(FLINT_jll.get_libflint_path())
+      -Dlibgmp_path=$(normaliz_jll.GMP_jll.get_libgmp_path())
+      -Dlibgmpxx_path=$(normaliz_jll.GMP_jll.get_libgmpxx_path())
+      -Dlibmpfr_path=$(normaliz_jll.MPFR_jll.get_libmpfr_path())
+      -Dlibnauty_path=$(normaliz_jll.nauty_jll.get_libnauty_path())
+      -Dlibflint_path=$(normaliz_jll.FLINT_jll.get_libflint_path())
       -Dlibomp_path=$libomp_path
       -B $(builddir)
       -S .
