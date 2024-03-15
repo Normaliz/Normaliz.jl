@@ -1,6 +1,7 @@
-project(libormaliz_julia)
-
 cmake_minimum_required(VERSION 3.01)
+
+project(libnormaliz_julia)
+
 set(CMAKE_MACOSX_RPATH 1)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
