@@ -5,8 +5,8 @@ import normaliz_jll
 
 using CxxWrap
 
-const libnormaliz_julia_path = joinpath(@__DIR__, "..", "deps", "src", "build", "lib", "libnormaliz_julia.$(Libdl.dlext)")
-@wrapmodule(libnormaliz_julia_path, :define_module_normaliz)
+get_libnormaliz_julia_path() = joinpath(@__DIR__, "..", "deps", "src", "build", "lib", "libnormaliz_julia.$(Libdl.dlext)")
+@wrapmodule(get_libnormaliz_julia_path, :define_module_normaliz)
 
 function __init__()
     @initcxx
