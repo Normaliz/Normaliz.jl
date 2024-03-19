@@ -12,6 +12,10 @@ normaliz_jll = "6690c6e9-4e12-53b8-b8fd-4bffaef8839f"
 
 [compat]
 julia = "1.6"
+CxxWrap = "0.14"
+Libdl = "1.6"
+Pkg = "1.6"
+
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
