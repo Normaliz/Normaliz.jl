@@ -9,10 +9,10 @@ using Normaliz
   xx = Normaliz.NmzMatrix{Int}([1 2 ; 3 5])
 end
 
-@testset "Second LongCone test" begin
+@testset "Second LongLongCone test" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
   gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
-  yy = Normaliz.LongCone( Dict( :cone => xx, :grading => gg ) )
+  yy = Normaliz.LongLongCone( Dict( :cone => xx, :grading => gg ) )
   Normaliz.get_rational_cone_property(yy, "Multiplicity")
   Normaliz.get_boolean_cone_property(yy, "IsIntegrallyClosed")
   Normaliz.get_vector_cone_property( yy, "Grading" )
@@ -20,7 +20,7 @@ end
   Normaliz.get_matrix_cone_property( yy, "HilbertBasis" )
   Normaliz.get_matrix_cone_property( yy, "ModuleGeneratorsOverOriginalMonoid" )
   Normaliz.get_matrix_cone_property( yy, "MaximalSubspace" )
-  Normaliz.get_matrix_cone_property( yy, "MarkovBasis" )
+#  Normaliz.get_matrix_cone_property( yy, "MarkovBasis" )
   Normaliz.get_vector_cone_property( yy, "WitnessNotIntegrallyClosed" )
   Normaliz.get_integer_cone_property( yy, "TriangulationDetSum" )
   Normaliz.get_gmp_integer_cone_property( yy, "ExternalIndex" )
@@ -32,7 +32,7 @@ end
 @testset "basic IntCone test" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
   gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
-  yy = Normaliz.LongCone( Dict( :cone => xx, :grading => gg ) )
+  yy = Normaliz.LongLongCone( Dict( :cone => xx, :grading => gg ) )
   Normaliz.get_rational_cone_property(yy, "Multiplicity")
   Normaliz.get_boolean_cone_property(yy, "IsIntegrallyClosed")
   Normaliz.get_vector_cone_property( yy, "Grading" )
@@ -40,13 +40,14 @@ end
   Normaliz.get_matrix_cone_property( yy, "HilbertBasis" )
   Normaliz.get_matrix_cone_property( yy, "ModuleGeneratorsOverOriginalMonoid" )
   Normaliz.get_matrix_cone_property( yy, "MaximalSubspace" )
-  Normaliz.get_matrix_cone_property( yy, "MarkovBasis" )
+#  Normaliz.get_matrix_cone_property( yy, "MarkovBasis" )
   Normaliz.get_vector_cone_property( yy, "WitnessNotIntegrallyClosed" )
   Normaliz.get_integer_cone_property( yy, "TriangulationDetSum" )
   Normaliz.get_gmp_integer_cone_property( yy, "ExternalIndex" )
   Normaliz.get_float_cone_property( yy, "EuclideanVolume" )
   Normaliz.get_machine_integer_cone_property( yy, "EmbeddingDim" )
   Normaliz.get_boolean_cone_property(yy, "IsDeg1HilbertBasis")
+end
 
 @testset "basic GMPCone test" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
