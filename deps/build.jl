@@ -72,6 +72,3 @@ CMake_jll.cmake() do exe
       -j$(div(Sys.CPU_THREADS,2))
   `)
 end
-
-# force new precompilation
-touch(joinpath(@__DIR__, "..", "src", "Normaliz.jl"))
