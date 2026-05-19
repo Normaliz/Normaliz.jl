@@ -35,19 +35,20 @@ to_normaliz_matrix(jl_value_t* input_dict)
     }
     jl_array_t* keys =
         reinterpret_cast<jl_array_t*>(jl_get_field(input_dict, "keys"));
-    jl_array_t* value =
+    jl_array_t* vals =
         reinterpret_cast<jl_array_t*>(jl_get_field(input_dict, "vals"));
     size_t                                       len = jl_array_len(keys);
     std::map<libnormaliz::Type::InputType, Matrix<T>> input_map;
+
+    jl_sym_t* * keys_data = jlcxx::jlcxx_array_data<jl_sym_t*>(keys);
+    Matrix<T>* * vals_data = jlcxx::jlcxx_array_data<Matrix<T>*>(vals);
     for (size_t i = 0; i < len; i++) {
-        if (!jl_array_isassigned(keys, i)) {
+        if (!keys_data[i]) {
             continue;
         }
         // We assume the matrix has the right type
-        Matrix<T>* mat = reinterpret_cast<Matrix<T>*>(
-            *reinterpret_cast<void**>(jl_arrayref(value, i)));
-        std::string key(jl_symbol_name(
-            reinterpret_cast<jl_sym_t*>(jl_arrayref(keys, i))));
+        Matrix<T>* mat = vals_data[i];
+        std::string key(jl_symbol_name(keys_data[i]));
         input_map[libnormaliz::to_type(key)] = Matrix<T>(*mat);
     }
     return input_map;
@@ -74,13 +75,9 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
         .constructor<long>()
         .method("to_string", [](mpz_class& i) { return i.get_str(); });
 
-    jlcxx::stl::apply_stl<mpz_class>(normaliz);
-
     normaliz.add_type<mpq_class>("NmzRational")
         .constructor<long, long>()
         .method("to_string", [](mpq_class& i) { return i.get_str(); });
-
-    jlcxx::stl::apply_stl<mpq_class>(normaliz);
 
 #ifdef ENFNORMALIZ
     normaliz.add_type<renf_class>("RenfClass")
