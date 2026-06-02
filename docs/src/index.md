@@ -35,7 +35,7 @@ julia> Normaliz.get_matrix_cone_property( yy, "ExtremeRays" )
  3  5
 
 julia> Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
-2×2 Normaliz.NmzMatrixAllocated{Int64}:
+2×2 Normaliz.NmzMatrixAllocated{CxxWrap.CxxWrapCore.CxxLongLong}:
  -5   3
   2  -1
 ```
