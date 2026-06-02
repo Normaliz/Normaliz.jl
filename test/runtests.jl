@@ -10,6 +10,40 @@ using CxxWrap
   xx = Normaliz.NmzMatrix{Int}([1 2 ; 3 5])
 end
 
+@testset "BigInt scalar conversions" begin
+  integer = big(2)^100 + 123
+  nmz_integer = convert(Normaliz.NmzInteger, integer)
+  @test nmz_integer isa Normaliz.NmzInteger
+  @test convert(BigInt, nmz_integer) == integer
+  @test convert(BigInt, convert(Normaliz.NmzInteger, -integer)) == -integer
+  @test convert(BigInt, convert(Normaliz.NmzInteger, big(0))) == 0
+
+  rational = integer // (big(2)^80 + 5)
+  nmz_rational = convert(Normaliz.NmzRational, rational)
+  @test nmz_rational isa Normaliz.NmzRational
+  @test numerator(nmz_rational) isa Normaliz.NmzInteger
+  @test denominator(nmz_rational) isa Normaliz.NmzInteger
+  @test convert(BigInt, numerator(nmz_rational)) == numerator(rational)
+  @test convert(BigInt, denominator(nmz_rational)) == denominator(rational)
+  @test convert(Rational{BigInt}, nmz_rational) == rational
+
+  nmz_num = convert(Normaliz.NmzInteger, numerator(rational))
+  nmz_den = convert(Normaliz.NmzInteger, denominator(rational))
+  @test convert(Rational{BigInt}, Normaliz.NmzRational(nmz_num, nmz_den)) == rational
+  @test convert(Rational{BigInt}, nmz_num // nmz_den) == rational
+end
+
+@testset "BigInt matrix conversions" begin
+  integer = big(2)^100 + 123
+  integers = BigInt[integer 2; 3 4]
+  nmz_integers = Normaliz.NmzMatrix{Normaliz.NmzInteger}(integers)
+  @test Matrix{BigInt}(nmz_integers) == integers
+
+  rationals = Rational{BigInt}[integer//3 2//5; 7//11 13//17]
+  nmz_rationals = Normaliz.NmzMatrix{Normaliz.NmzRational}(rationals)
+  @test Matrix{Rational{BigInt}}(nmz_rationals) == rationals
+end
+
 @testset "cone input normalization" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
   gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
