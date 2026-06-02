@@ -46,6 +46,13 @@ Base.show(io::IO,x::NmzInteger) = print(io,to_string(x))
 Base.show(io::IO,x::NmzRational) = print(io,to_string(x))
 Base.show(io::IO,x::Cone) = print(io,"Normaliz cone")
 
+_string_vector(x) = String.(collect(x))
+
+known_cone_properties() = _string_vector(_known_cone_properties())
+computed_cone_properties(cone::Cone) = _string_vector(_computed_cone_properties(cone))
+is_computed(cone::Cone, property::AbstractString) = _is_computed(cone, property)
+is_computed(cone::Cone, property::Symbol) = is_computed(cone, String(property))
+
 get_matrix_cone_property(cone, property::Symbol) =
     get_matrix_cone_property(cone, String(property))
 get_vector_cone_property(cone, property::Symbol) =

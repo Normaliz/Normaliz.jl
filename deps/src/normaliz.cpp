@@ -56,6 +56,19 @@ void set_bigint_from_nmzinteger(jl_value_t* result, mpz_class& value)
     mpz_set(julia_bigint_data_mutable(result), value.get_mpz_t());
 }
 
+std::vector<std::string> cone_property_names(const libnormaliz::ConeProperties& properties)
+{
+    std::vector<std::string> names;
+    for (int i = 0; i < libnormaliz::ConeProperty::EnumSize; ++i) {
+        auto property = static_cast<libnormaliz::ConeProperty::Enum>(i);
+        if (properties.test(property) &&
+            libnormaliz::output_type(property) != libnormaliz::OutputType::Void) {
+            names.push_back(libnormaliz::toString(property));
+        }
+    }
+    return names;
+}
+
 template <typename T>
 std::map<libnormaliz::Type::InputType, Matrix<T>>
 to_normaliz_matrix(std::vector<std::string> input_keys,
@@ -251,7 +264,18 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                                    return C.getBooleanConeProperty(
                                        libnormaliz::toConeProperty(s));
                                });
+                wrapped.method("_computed_cone_properties", [](WrappedT& C) {
+                    return cone_property_names(C.getIsComputed());
+                });
+                wrapped.method("_is_computed", [](WrappedT& C,
+                                                  const std::string& s) {
+                    return C.isComputed(libnormaliz::toConeProperty(s));
+                });
             });
+
+    normaliz.method("_known_cone_properties", []() {
+        return cone_property_names(libnormaliz::all_goals());
+    });
 
     normaliz.method("_GMPCone", [](std::vector<std::string> input_keys,
                                    jlcxx::ArrayRef<Matrix<mpq_class>>
