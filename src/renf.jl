@@ -32,4 +32,9 @@ function RenfClass(minpoly::String, gen::String, emb::String, prec::Int = 64)
   return renf_class_construct(minpoly, gen, emb, prec)
 end
 
+function RenfCone(input::AbstractDict)
+  normalized = _normaliz_input(input)
+  return _RenfCone(normalized.input_keys, normalized.input_matrices)
+end
+
 Cone{Renf}(args...)       = RenfCone(args...)
