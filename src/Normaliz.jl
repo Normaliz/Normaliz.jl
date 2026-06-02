@@ -53,6 +53,32 @@ computed_cone_properties(cone::Cone) = _string_vector(_computed_cone_properties(
 is_computed(cone::Cone, property::AbstractString) = _is_computed(cone, property)
 is_computed(cone::Cone, property::Symbol) = is_computed(cone, String(property))
 
+function cone_property(cone::Cone, property::AbstractString)
+    output_type = _cone_property_output_type(property)
+    if output_type == "Matrix"
+        return get_matrix_cone_property(cone, property)
+    elseif output_type == "Vector"
+        return get_vector_cone_property(cone, property)
+    elseif output_type == "Integer"
+        return get_integer_cone_property(cone, property)
+    elseif output_type == "GMPInteger"
+        return get_gmp_integer_cone_property(cone, property)
+    elseif output_type == "Rational"
+        return get_rational_cone_property(cone, property)
+    elseif output_type == "Float"
+        return get_float_cone_property(cone, property)
+    elseif output_type == "MachineInteger"
+        return get_machine_integer_cone_property(cone, property)
+    elseif output_type == "Bool"
+        return get_boolean_cone_property(cone, property)
+    end
+    throw(ArgumentError(
+        "cone property $property has unsupported output type $output_type"))
+end
+
+cone_property(cone::Cone, property::Symbol) =
+    cone_property(cone, String(property))
+
 get_matrix_cone_property(cone, property::Symbol) =
     get_matrix_cone_property(cone, String(property))
 get_vector_cone_property(cone, property::Symbol) =
