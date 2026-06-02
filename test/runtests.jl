@@ -79,6 +79,34 @@ end
   Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
 end
 
+@testset "cone properties accept symbols" begin
+  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
+  gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
+  yy = Normaliz.LongLongCone( Dict( :cone => xx, :grading => gg ) )
+
+  @test Normaliz.get_boolean_cone_property(yy, :IsPointed) ==
+        Normaliz.get_boolean_cone_property(yy, "IsPointed")
+  @test Normaliz.get_integer_cone_property(yy, :TriangulationDetSum) ==
+        Normaliz.get_integer_cone_property(yy, "TriangulationDetSum")
+  @test string(Normaliz.get_gmp_integer_cone_property(yy, :ExternalIndex)) ==
+        string(Normaliz.get_gmp_integer_cone_property(yy, "ExternalIndex"))
+  @test string(Normaliz.get_rational_cone_property(yy, :Multiplicity)) ==
+        string(Normaliz.get_rational_cone_property(yy, "Multiplicity"))
+  @test Normaliz.get_float_cone_property(yy, :EuclideanVolume) ==
+        Normaliz.get_float_cone_property(yy, "EuclideanVolume")
+  @test Normaliz.get_machine_integer_cone_property(yy, :EmbeddingDim) ==
+        Normaliz.get_machine_integer_cone_property(yy, "EmbeddingDim")
+
+  grading_from_symbol = Normaliz.get_vector_cone_property(yy, :Grading)
+  grading_from_string = Normaliz.get_vector_cone_property(yy, "Grading")
+  @test typeof(grading_from_symbol) == typeof(grading_from_string)
+
+  matrix_from_symbol = Normaliz.get_matrix_cone_property(yy, :HilbertBasis)
+  matrix_from_string = Normaliz.get_matrix_cone_property(yy, "HilbertBasis")
+  @test size(matrix_from_symbol) == size(matrix_from_string)
+  @test string(matrix_from_symbol[1, 1]) == string(matrix_from_string[1, 1])
+end
+
 # TODO: reactivate these tests once Renf support is back
 #@testset "basic renf test" begin
 #  r = Normaliz.RenfClass("a4-5a2+5", "a", "1.9021+/-0.01")

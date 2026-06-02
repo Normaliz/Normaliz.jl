@@ -32,6 +32,23 @@ Base.show(io::IO,x::NmzInteger) = print(io,to_string(x))
 Base.show(io::IO,x::NmzRational) = print(io,to_string(x))
 Base.show(io::IO,x::Cone) = print(io,"Normaliz cone")
 
+get_matrix_cone_property(cone, property::Symbol) =
+    get_matrix_cone_property(cone, String(property))
+get_vector_cone_property(cone, property::Symbol) =
+    get_vector_cone_property(cone, String(property))
+get_integer_cone_property(cone, property::Symbol) =
+    get_integer_cone_property(cone, String(property))
+get_gmp_integer_cone_property(cone, property::Symbol) =
+    get_gmp_integer_cone_property(cone, String(property))
+get_rational_cone_property(cone, property::Symbol) =
+    get_rational_cone_property(cone, String(property))
+get_float_cone_property(cone, property::Symbol) =
+    get_float_cone_property(cone, String(property))
+get_machine_integer_cone_property(cone, property::Symbol) =
+    get_machine_integer_cone_property(cone, String(property))
+get_boolean_cone_property(cone, property::Symbol) =
+    get_boolean_cone_property(cone, String(property))
+
 function _normaliz_input(input::AbstractDict)
     input_pairs = collect(pairs(input))
     input_keys = String[]
