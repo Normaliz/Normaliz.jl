@@ -22,6 +22,10 @@ function Base.convert(::Type{BigInt},x::NmzInteger)
     return result
 end
 Base.convert(::Type{NmzRational},x::Int64) = NmzRational(x,1)
+Base.convert(::Type{NmzRational},x::BigInt) =
+    NmzRational(convert(NmzInteger,x), NmzInteger(1))
+Base.convert(::Type{NmzRational},x::NmzInteger) =
+    NmzRational(x, NmzInteger(1))
 Base.://(x::NmzInteger,y::NmzInteger) = NmzRational(x,y)
 Base.convert(::Type{NmzRational},x::Rational{BigInt}) =
     convert(NmzInteger,x.num) // convert(NmzInteger,x.den)
@@ -99,17 +103,37 @@ get_boolean_cone_property(cone, property::Symbol) =
 function _normaliz_input(input::AbstractDict)
     input_pairs = collect(pairs(input))
     input_keys = String[]
-    for (key, _) in input_pairs
+    input_matrices = NmzMatrix{NmzRational}[]
+    for (key, matrix) in input_pairs
         key isa Symbol ||
             throw(ArgumentError("Normaliz cone input keys must be Symbols"))
         push!(input_keys, String(key))
+        push!(input_matrices, _normaliz_input_matrix(key, matrix))
     end
     input_keys = CxxWrap.StdLib.StdVector{CxxWrap.StdLib.StdString}(input_keys)
-    input_matrices = CxxRef.([matrix for (_, matrix) in input_pairs])
+    input_matrices = CxxRef.(input_matrices)
     return input_keys, input_matrices
 end
 
-function NmzMatrix{T}(x::Matrix{S}) where S where T
+_normaliz_input_matrix(key::Symbol, matrix::NmzMatrix{NmzRational}) = matrix
+
+function _normaliz_input_matrix(key::Symbol, matrix::AbstractMatrix)
+    try
+        return NmzMatrix{NmzRational}(matrix)
+    catch err
+        throw(ArgumentError(
+            "Normaliz cone input value for :$key must be convertible " *
+            "to NmzMatrix{NmzRational}"))
+    end
+end
+
+function _normaliz_input_matrix(key::Symbol, value)
+    throw(ArgumentError(
+        "Normaliz cone input values must be matrices; " *
+        "value for :$key has type $(typeof(value))"))
+end
+
+function NmzMatrix{T}(x::AbstractMatrix{S}) where S where T
    s = size(x)
    mat = NmzMatrix{T}(s[1],s[2])
    for i in 1:s[1], j in 1:s[2]
