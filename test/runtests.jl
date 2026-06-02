@@ -113,6 +113,26 @@ end
   Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
 end
 
+@testset "cone property queries" begin
+  known_properties = Normaliz.known_cone_properties()
+  @test known_properties isa Vector{String}
+  @test "ExtremeRays" in known_properties
+  @test "Multiplicity" in known_properties
+  @test "IsPointed" in known_properties
+  @test !("DefaultMode" in known_properties)
+
+  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
+  yy = Normaliz.GMPCone( Dict( :cone => xx ) )
+
+  @test !Normaliz.is_computed(yy, :ExtremeRays)
+  Normaliz.get_matrix_cone_property(yy, :ExtremeRays)
+  computed_properties = Normaliz.computed_cone_properties(yy)
+  @test computed_properties isa Vector{String}
+  @test "ExtremeRays" in computed_properties
+  @test Normaliz.is_computed(yy, "ExtremeRays")
+  @test Normaliz.is_computed(yy, :ExtremeRays)
+end
+
 @testset "cone properties accept symbols" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
   gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
