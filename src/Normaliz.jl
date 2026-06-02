@@ -32,6 +32,19 @@ Base.show(io::IO,x::NmzInteger) = print(io,to_string(x))
 Base.show(io::IO,x::NmzRational) = print(io,to_string(x))
 Base.show(io::IO,x::Cone) = print(io,"Normaliz cone")
 
+function _normaliz_input(input::AbstractDict)
+    input_pairs = collect(pairs(input))
+    input_keys = String[]
+    for (key, _) in input_pairs
+        key isa Symbol ||
+            throw(ArgumentError("Normaliz cone input keys must be Symbols"))
+        push!(input_keys, String(key))
+    end
+    input_keys = CxxWrap.StdLib.StdVector{CxxWrap.StdLib.StdString}(input_keys)
+    input_matrices = CxxRef.([matrix for (_, matrix) in input_pairs])
+    return input_keys, input_matrices
+end
+
 function NmzMatrix{T}(x::Matrix{S}) where S where T
    s = size(x)
    mat = NmzMatrix{T}(s[1],s[2])
@@ -49,6 +62,16 @@ end
 #    end
 #    return vec
 #end
+
+function GMPCone(input::AbstractDict)
+    input_keys, input_matrices = _normaliz_input(input)
+    return _GMPCone(input_keys, input_matrices)
+end
+
+function LongLongCone(input::AbstractDict)
+    input_keys, input_matrices = _normaliz_input(input)
+    return _LongLongCone(input_keys, input_matrices)
+end
 
 Cone{NmzInteger}(args...) = GMPCone(args...)
 Cone{BigInt}(args...)     = GMPCone(args...)

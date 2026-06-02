@@ -1,5 +1,6 @@
 using Test
 using Normaliz
+using CxxWrap
 
 @testset "basic NmzMatrix tests" begin
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
@@ -7,6 +8,27 @@ using Normaliz
   xx = Normaliz.NmzMatrix{Normaliz.NmzInteger}([1 2 ; 3 5])
 
   xx = Normaliz.NmzMatrix{Int}([1 2 ; 3 5])
+end
+
+@testset "cone input normalization" begin
+  xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
+  gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
+  input_keys, input_matrices = Normaliz._normaliz_input(Dict(:cone => xx, :grading => gg))
+  input_key_strings = collect(input_keys)
+
+  @test input_keys isa CxxWrap.StdLib.StdVector{CxxWrap.StdLib.StdString}
+  @test Set(input_key_strings) == Set(["cone", "grading"])
+  @test length(input_matrices) == 2
+
+  cone_index = findfirst(==("cone"), input_key_strings)
+  grading_index = findfirst(==("grading"), input_key_strings)
+  @test size(input_matrices[cone_index][]) == (2, 2)
+  @test string(input_matrices[cone_index][][1, 1]) == "1/2"
+  @test size(input_matrices[grading_index][]) == (1, 2)
+
+  mismatched_keys = CxxWrap.StdLib.StdVector{CxxWrap.StdLib.StdString}(["cone", "grading"])
+  err = @test_throws ErrorException Normaliz._LongLongCone(mismatched_keys, input_matrices[1:1])
+  @test err.value.msg == "Normaliz cone input keys and matrices must have the same length"
 end
 
 @testset "Second LongLongCone test" begin

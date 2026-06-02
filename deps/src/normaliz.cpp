@@ -26,89 +26,20 @@ using libnormaliz::renf_elem_class;
 
 template <typename T>
 std::map<libnormaliz::Type::InputType, Matrix<T>>
-to_normaliz_matrix(jl_value_t* input_dict)
+to_normaliz_matrix(std::vector<std::string> input_keys,
+                   jlcxx::ArrayRef<Matrix<T>> input_matrices)
 {
-    if (!jl_isa(input_dict, jl_eval_string("Dict"))) {
-        jl_type_error("to_normaliz_matrix", jl_eval_string("Dict"),
-                      jl_typeof(input_dict));
-        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+    size_t len = input_keys.size();
+    if (len != input_matrices.size()) {
+        throw std::runtime_error(
+            "Normaliz cone input keys and matrices must have the same length");
     }
-    jl_value_t* keys_iter = nullptr;
-    jl_value_t* vals_iter = nullptr;
-    jl_value_t* keys_array_value = nullptr;
-    jl_value_t* vals_array_value = nullptr;
-    jl_value_t* idx = nullptr;
-    jl_value_t* key_value = nullptr;
-    jl_value_t* mat_value = nullptr;
-    JL_GC_PUSH7(&keys_iter, &vals_iter, &keys_array_value, &vals_array_value,
-                &idx, &key_value, &mat_value);
-
-    keys_iter = jl_call1(jl_get_function(jl_base_module, "keys"), input_dict);
-    if (jl_exception_occurred()) {
-        JL_GC_POP();
-        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-    }
-
-    vals_iter = jl_call1(jl_get_function(jl_base_module, "values"), input_dict);
-    if (jl_exception_occurred()) {
-        JL_GC_POP();
-        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-    }
-
-    keys_array_value =
-        jl_call1(jl_get_function(jl_base_module, "collect"), keys_iter);
-    if (jl_exception_occurred()) {
-        JL_GC_POP();
-        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-    }
-    vals_array_value =
-        jl_call1(jl_get_function(jl_base_module, "collect"), vals_iter);
-    if (jl_exception_occurred()) {
-        JL_GC_POP();
-        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-    }
-    if (!jl_is_array(keys_array_value) || !jl_is_array(vals_array_value)) {
-        jl_value_t* actual_type =
-            jl_typeof(jl_is_array(keys_array_value) ? vals_array_value
-                                                    : keys_array_value);
-        JL_GC_POP();
-        jl_type_error("to_normaliz_matrix", jl_eval_string("Array"),
-                      actual_type);
-        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-    }
-
-    jl_array_t* keys = reinterpret_cast<jl_array_t*>(keys_array_value);
-    jl_array_t* vals = reinterpret_cast<jl_array_t*>(vals_array_value);
-    size_t                                       len = jl_array_len(keys);
     std::map<libnormaliz::Type::InputType, Matrix<T>> input_map;
 
-    jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
     for (size_t i = 0; i < len; i++) {
-        idx = jl_box_int64(static_cast<int64_t>(i + 1));
-        key_value = jl_call2(getindex, keys_array_value, idx);
-        if (jl_exception_occurred()) {
-            JL_GC_POP();
-            return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-        }
-        mat_value = jl_call2(getindex, vals_array_value, idx);
-        if (jl_exception_occurred()) {
-            JL_GC_POP();
-            return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-        }
-        if (!jl_is_symbol(key_value)) {
-            JL_GC_POP();
-            jl_type_error("to_normaliz_matrix",
-                          reinterpret_cast<jl_value_t*>(jl_symbol_type),
-                          jl_typeof(key_value));
-            return std::map<libnormaliz::Type::InputType, Matrix<T>>();
-        }
-
-        Matrix<T>* mat = jlcxx::unbox<Matrix<T>*>(mat_value);
-        std::string key(
-            jl_symbol_name(reinterpret_cast<jl_sym_t*>(key_value)));
-        input_map[libnormaliz::to_type(key)] = Matrix<T>(*mat);
+        input_map[libnormaliz::to_type(input_keys[i])] =
+            Matrix<T>(input_matrices[i]);
     }
-    JL_GC_POP();
     return input_map;
 }
 
@@ -282,15 +213,24 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                                });
             });
 
-    normaliz.method("GMPCone", [](jl_value_t* input_dict) {
-        return Cone<mpz_class>(to_normaliz_matrix<mpq_class>(input_dict));
+    normaliz.method("_GMPCone", [](std::vector<std::string> input_keys,
+                                   jlcxx::ArrayRef<Matrix<mpq_class>>
+                                       input_matrices) {
+        return Cone<mpz_class>(
+            to_normaliz_matrix<mpq_class>(input_keys, input_matrices));
     });
-    normaliz.method("LongLongCone", [](jl_value_t* input_dict) {
-        return Cone<long long>(to_normaliz_matrix<mpq_class>(input_dict));
+    normaliz.method("_LongLongCone", [](std::vector<std::string> input_keys,
+                                        jlcxx::ArrayRef<Matrix<mpq_class>>
+                                            input_matrices) {
+        return Cone<long long>(
+            to_normaliz_matrix<mpq_class>(input_keys, input_matrices));
     });
 #ifdef ENFNORMALIZ
-    normaliz.method("RenfCone", [](jl_value_t* input_dict) {
-        return Cone<renf_elem_class>(to_normaliz_matrix<renf_elem_class>(input_dict));
+    normaliz.method("_RenfCone", [](std::vector<std::string> input_keys,
+                                    jlcxx::ArrayRef<Matrix<renf_elem_class>>
+                                        input_matrices) {
+        return Cone<renf_elem_class>(
+            to_normaliz_matrix<renf_elem_class>(input_keys, input_matrices));
     });
 #endif
 }
