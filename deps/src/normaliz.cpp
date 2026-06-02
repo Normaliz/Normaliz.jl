@@ -33,24 +33,76 @@ to_normaliz_matrix(jl_value_t* input_dict)
                       jl_typeof(input_dict));
         return std::map<libnormaliz::Type::InputType, Matrix<T>>();
     }
-    jl_array_t* keys =
-        reinterpret_cast<jl_array_t*>(jl_get_field(input_dict, "keys"));
-    jl_array_t* vals =
-        reinterpret_cast<jl_array_t*>(jl_get_field(input_dict, "vals"));
+    jl_value_t* keys_iter = jl_call1(jl_get_function(jl_base_module, "keys"),
+                                     input_dict);
+    if (jl_exception_occurred()) {
+        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+    }
+
+    jl_value_t* vals_iter = jl_call1(jl_get_function(jl_base_module, "values"),
+                                     input_dict);
+    if (jl_exception_occurred()) {
+        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+    }
+
+    jl_value_t* keys_array_value = nullptr;
+    jl_value_t* vals_array_value = nullptr;
+    JL_GC_PUSH4(&keys_iter, &vals_iter, &keys_array_value, &vals_array_value);
+    keys_array_value =
+        jl_call1(jl_get_function(jl_base_module, "collect"), keys_iter);
+    if (jl_exception_occurred()) {
+        JL_GC_POP();
+        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+    }
+    vals_array_value =
+        jl_call1(jl_get_function(jl_base_module, "collect"), vals_iter);
+    if (jl_exception_occurred()) {
+        JL_GC_POP();
+        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+    }
+    if (!jl_is_array(keys_array_value) || !jl_is_array(vals_array_value)) {
+        jl_type_error("to_normaliz_matrix", jl_eval_string("Array"),
+                      jl_typeof(keys_array_value));
+        JL_GC_POP();
+        return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+    }
+
+    jl_array_t* keys = reinterpret_cast<jl_array_t*>(keys_array_value);
+    jl_array_t* vals = reinterpret_cast<jl_array_t*>(vals_array_value);
     size_t                                       len = jl_array_len(keys);
     std::map<libnormaliz::Type::InputType, Matrix<T>> input_map;
 
-    jl_sym_t* * keys_data = jlcxx::jlcxx_array_data<jl_sym_t*>(keys);
-    Matrix<T>* * vals_data = jlcxx::jlcxx_array_data<Matrix<T>*>(vals);
+    jl_function_t* getindex = jl_get_function(jl_base_module, "getindex");
     for (size_t i = 0; i < len; i++) {
-        if (!keys_data[i]) {
-            continue;
+        jl_value_t* idx = jl_box_int64(static_cast<int64_t>(i + 1));
+        JL_GC_PUSH1(&idx);
+        jl_value_t* key_value = jl_call2(getindex, keys_array_value, idx);
+        if (jl_exception_occurred()) {
+            JL_GC_POP();
+            JL_GC_POP();
+            return std::map<libnormaliz::Type::InputType, Matrix<T>>();
         }
-        // We assume the matrix has the right type
-        Matrix<T>* mat = vals_data[i];
-        std::string key(jl_symbol_name(keys_data[i]));
+        jl_value_t* mat_value = jl_call2(getindex, vals_array_value, idx);
+        if (jl_exception_occurred()) {
+            JL_GC_POP();
+            JL_GC_POP();
+            return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+        }
+        JL_GC_POP();
+        if (!jl_is_symbol(key_value)) {
+            jl_type_error("to_normaliz_matrix",
+                          reinterpret_cast<jl_value_t*>(jl_symbol_type),
+                          jl_typeof(key_value));
+            JL_GC_POP();
+            return std::map<libnormaliz::Type::InputType, Matrix<T>>();
+        }
+
+        Matrix<T>* mat = jlcxx::unbox<Matrix<T>*>(mat_value);
+        std::string key(
+            jl_symbol_name(reinterpret_cast<jl_sym_t*>(key_value)));
         input_map[libnormaliz::to_type(key)] = Matrix<T>(*mat);
     }
+    JL_GC_POP();
     return input_map;
 }
 

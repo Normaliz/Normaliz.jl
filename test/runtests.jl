@@ -13,6 +13,7 @@ end
   xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1//2 2 ; 3 5])
   gg = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 1])
   yy = Normaliz.LongLongCone( Dict( :cone => xx, :grading => gg ) )
+  @test yy isa Normaliz.Cone
   Normaliz.get_rational_cone_property(yy, "Multiplicity")
   Normaliz.get_boolean_cone_property(yy, "IsIntegrallyClosed")
   Normaliz.get_vector_cone_property( yy, "Grading" )
