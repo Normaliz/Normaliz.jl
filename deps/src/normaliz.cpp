@@ -69,6 +69,37 @@ std::vector<std::string> cone_property_names(const libnormaliz::ConeProperties& 
     return names;
 }
 
+std::string cone_property_output_type(const std::string& name)
+{
+    switch (libnormaliz::output_type(libnormaliz::toConeProperty(name))) {
+    case libnormaliz::OutputType::Matrix:
+        return "Matrix";
+    case libnormaliz::OutputType::MatrixFloat:
+        return "MatrixFloat";
+    case libnormaliz::OutputType::Vector:
+        return "Vector";
+    case libnormaliz::OutputType::Integer:
+        return "Integer";
+    case libnormaliz::OutputType::GMPInteger:
+        return "GMPInteger";
+    case libnormaliz::OutputType::Rational:
+        return "Rational";
+    case libnormaliz::OutputType::FieldElem:
+        return "FieldElem";
+    case libnormaliz::OutputType::Float:
+        return "Float";
+    case libnormaliz::OutputType::MachineInteger:
+        return "MachineInteger";
+    case libnormaliz::OutputType::Bool:
+        return "Bool";
+    case libnormaliz::OutputType::Complex:
+        return "Complex";
+    case libnormaliz::OutputType::Void:
+        return "Void";
+    }
+    return "Unknown";
+}
+
 template <typename T>
 std::map<libnormaliz::Type::InputType, Matrix<T>>
 to_normaliz_matrix(std::vector<std::string> input_keys,
@@ -276,6 +307,7 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
     normaliz.method("_known_cone_properties", []() {
         return cone_property_names(libnormaliz::all_goals());
     });
+    normaliz.method("_cone_property_output_type", cone_property_output_type);
 
     normaliz.method("_GMPCone", [](std::vector<std::string> input_keys,
                                    jlcxx::ArrayRef<Matrix<mpq_class>>
