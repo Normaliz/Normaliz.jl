@@ -60,6 +60,35 @@ end
   @test string(input_matrices[cone_index][][1, 1]) == "1/2"
   @test size(input_matrices[grading_index][]) == (1, 2)
 
+  input_keys, input_matrices = Normaliz._normaliz_input(
+      Dict(:cone => [1//2 2 ; 3 5], :grading => [1 1]))
+  input_key_strings = collect(input_keys)
+  cone_index = findfirst(==("cone"), input_key_strings)
+  grading_index = findfirst(==("grading"), input_key_strings)
+  @test input_matrices[cone_index][] isa Normaliz.NmzMatrix{Normaliz.NmzRational}
+  @test string(input_matrices[cone_index][][1, 1]) == "1/2"
+  @test size(input_matrices[grading_index][]) == (1, 2)
+
+  large_integer = big(2)^80 + 1
+  input_keys, input_matrices = Normaliz._normaliz_input(
+      Dict(:cone => BigInt[large_integer 2; 3 4]))
+  @test string(input_matrices[1][][1, 1]) == string(large_integer)
+
+  integer_matrix = Normaliz.NmzMatrix{Normaliz.NmzInteger}([1 2 ; 3 4])
+  input_keys, input_matrices = Normaliz._normaliz_input(Dict(:cone => integer_matrix))
+  @test input_matrices[1][] isa Normaliz.NmzMatrix{Normaliz.NmzRational}
+  @test string(input_matrices[1][][1, 1]) == "1"
+
+  yy = Normaliz.LongLongCone(Dict(:cone => [1//2 2 ; 3 5], :grading => [1 1]))
+  @test yy isa Normaliz.Cone
+
+  err = @test_throws ArgumentError Normaliz._normaliz_input(Dict(:cone => "not a matrix"))
+  @test occursin("cone", err.value.msg)
+  @test occursin("Normaliz cone input values", err.value.msg)
+
+  err = @test_throws ArgumentError Normaliz._normaliz_input(Dict(:cone => ["x" ;;]))
+  @test occursin("NmzRational", err.value.msg)
+
   mismatched_keys = CxxWrap.StdLib.StdVector{CxxWrap.StdLib.StdString}(["cone", "grading"])
   err = @test_throws ErrorException Normaliz._LongLongCone(mismatched_keys, input_matrices[1:1])
   @test err.value.msg == "Normaliz cone input keys and matrices must have the same length"
