@@ -24,6 +24,38 @@ using libnormaliz::renf_elem_class;
 // template <typename T> using nmzvecmat = std::vector<std::vector<T>>;
 
 
+mpz_srcptr julia_bigint_data(jl_value_t* value)
+{
+    return reinterpret_cast<mpz_srcptr>(jl_data_ptr(value));
+}
+
+mpz_ptr julia_bigint_data_mutable(jl_value_t* value)
+{
+    return reinterpret_cast<mpz_ptr>(jl_data_ptr(value));
+}
+
+void require_julia_bigint(jl_value_t* value)
+{
+    jl_value_t* bigint_type = jl_get_global(jl_base_module, jl_symbol("BigInt"));
+    if (jl_typeof(value) != bigint_type) {
+        throw std::invalid_argument("expected a Julia BigInt");
+    }
+}
+
+mpz_class nmzinteger_from_bigint(jl_value_t* value)
+{
+    require_julia_bigint(value);
+    mpz_class result;
+    mpz_set(result.get_mpz_t(), julia_bigint_data(value));
+    return result;
+}
+
+void set_bigint_from_nmzinteger(jl_value_t* result, mpz_class& value)
+{
+    require_julia_bigint(result);
+    mpz_set(julia_bigint_data_mutable(result), value.get_mpz_t());
+}
+
 template <typename T>
 std::map<libnormaliz::Type::InputType, Matrix<T>>
 to_normaliz_matrix(std::vector<std::string> input_keys,
@@ -62,11 +94,19 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
 {
     normaliz.add_type<mpz_class>("NmzInteger")
         .constructor<long>()
+        .constructor<std::string>()
         .method("to_string", [](mpz_class& i) { return i.get_str(); });
+
+    normaliz.method("_NmzInteger_from_bigint", nmzinteger_from_bigint);
+    normaliz.method("_set_bigint!", set_bigint_from_nmzinteger);
 
     normaliz.add_type<mpq_class>("NmzRational")
         .constructor<long, long>()
-        .method("to_string", [](mpq_class& i) { return i.get_str(); });
+        .constructor<mpz_class, mpz_class>()
+        .constructor<std::string>()
+        .method("to_string", [](mpq_class& i) { return i.get_str(); })
+        .method("_numerator", [](mpq_class& i) { return i.get_num(); })
+        .method("_denominator", [](mpq_class& i) { return i.get_den(); });
 
 #ifdef ENFNORMALIZ
     normaliz.add_type<renf_class>("RenfClass")
