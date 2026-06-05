@@ -85,6 +85,7 @@ jobs:
             --root "$PWD" \
             --filter deps/src/normaliz.cpp \
             --gcov-object-directory deps/src/build \
+            --exclude-throw-branches \
             --lcov cxx.lcov
           cat cxx.lcov >> lcov.info
       - name: "Upload coverage data to Codecov"
