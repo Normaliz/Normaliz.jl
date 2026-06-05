@@ -142,6 +142,29 @@ end
   Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
 end
 
+@testset "high-level cone API" begin
+  yy = Normaliz.Cone(Dict(:cone => [1 2 ; 3 5], :grading => [1 1]))
+  @test yy isa Normaliz.Cone
+
+  hilbert_basis = Normaliz.cone_property(yy, :HilbertBasis)
+  @test hilbert_basis isa Matrix{BigInt}
+  @test hilbert_basis == BigInt[1 2 ; 3 5]
+
+  grading = Normaliz.cone_property(yy, :Grading)
+  @test grading isa Vector{BigInt}
+  @test grading == BigInt[1, 1]
+
+  @test Normaliz.cone_property(yy, :ExternalIndex) == big(1)
+  @test Normaliz.cone_property(yy, :Multiplicity) isa Rational{BigInt}
+  @test Normaliz.cone_property(yy, :EuclideanVolume) isa Float64
+  @test Normaliz.cone_property(yy, :EmbeddingDim) isa Int
+  @test Normaliz.cone_property(yy, :IsPointed) isa Bool
+
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1], type = :longlong)
+  @test yy isa Normaliz.Cone
+  @test Normaliz.cone_property(yy, :HilbertBasis) == BigInt[1 2 ; 3 5]
+end
+
 @testset "cone property queries" begin
   known_properties = Normaliz.known_cone_properties()
   @test known_properties isa Vector{String}
@@ -197,17 +220,12 @@ end
 
   matrix_from_generic = Normaliz.cone_property(yy, :HilbertBasis)
   matrix_from_typed = Normaliz.get_matrix_cone_property(yy, "HilbertBasis")
-  @test size(matrix_from_generic) == size(matrix_from_typed)
-  @test string(matrix_from_generic[1, 1]) == string(matrix_from_typed[1, 1])
+  @test matrix_from_generic == Matrix{BigInt}(matrix_from_typed)
 
-  @test typeof(Normaliz.cone_property(yy, :Grading)) ==
-        typeof(Normaliz.get_vector_cone_property(yy, "Grading"))
-  @test Normaliz.cone_property(yy, :TriangulationDetSum) ==
-        Normaliz.get_integer_cone_property(yy, "TriangulationDetSum")
-  @test string(Normaliz.cone_property(yy, :ExternalIndex)) ==
-        string(Normaliz.get_gmp_integer_cone_property(yy, "ExternalIndex"))
-  @test string(Normaliz.cone_property(yy, :Multiplicity)) ==
-        string(Normaliz.get_rational_cone_property(yy, "Multiplicity"))
+  @test eltype(Normaliz.cone_property(yy, :Grading)) <: Integer
+  @test Normaliz.cone_property(yy, :TriangulationDetSum) isa Integer
+  @test Normaliz.cone_property(yy, :ExternalIndex) isa BigInt
+  @test Normaliz.cone_property(yy, :Multiplicity) isa Rational{BigInt}
   @test Normaliz.cone_property(yy, :EuclideanVolume) ==
         Normaliz.get_float_cone_property(yy, "EuclideanVolume")
   @test Normaliz.cone_property(yy, "EmbeddingDim") ==
