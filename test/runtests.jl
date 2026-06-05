@@ -238,6 +238,21 @@ end
   @test occursin("Complex", err.value.msg)
 end
 
+@testset "cone property output types" begin
+  @test String(Normaliz._cone_property_output_type("HilbertBasis")) == "Matrix"
+  @test String(Normaliz._cone_property_output_type("ExtremeRaysFloat")) == "MatrixFloat"
+  @test String(Normaliz._cone_property_output_type("Grading")) == "Vector"
+  @test String(Normaliz._cone_property_output_type("TriangulationDetSum")) == "Integer"
+  @test String(Normaliz._cone_property_output_type("ExternalIndex")) == "GMPInteger"
+  @test String(Normaliz._cone_property_output_type("Multiplicity")) == "Rational"
+  @test String(Normaliz._cone_property_output_type("RenfVolume")) == "FieldElem"
+  @test String(Normaliz._cone_property_output_type("EuclideanVolume")) == "Float"
+  @test String(Normaliz._cone_property_output_type("EmbeddingDim")) == "MachineInteger"
+  @test String(Normaliz._cone_property_output_type("IsPointed")) == "Bool"
+  @test String(Normaliz._cone_property_output_type("Triangulation")) == "Complex"
+  @test String(Normaliz._cone_property_output_type("DefaultMode")) == "Void"
+end
+
 # TODO: reactivate these tests once Renf support is back
 #@testset "basic renf test" begin
 #  r = Normaliz.RenfClass("a4-5a2+5", "a", "1.9021+/-0.01")

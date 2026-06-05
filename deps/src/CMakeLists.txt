@@ -18,6 +18,9 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${JlCxx_location}")
 
+option(NORMALIZ_JULIA_ENABLE_COVERAGE
+       "Build libnormaliz_julia with C++ coverage instrumentation" OFF)
+
 include_directories(
     ${gmp_prefix}/include
     ${normaliz_prefix}/include
@@ -27,6 +30,17 @@ include_directories(
     )
 
 add_library(${JL_TARGET} SHARED normaliz.cpp)
+
+if(NORMALIZ_JULIA_ENABLE_COVERAGE)
+    if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+        message(STATUS "Building ${JL_TARGET} with C++ coverage flags")
+        target_compile_options(${JL_TARGET} PRIVATE --coverage -O0 -g)
+        target_link_libraries(${JL_TARGET} --coverage)
+    else()
+        message(FATAL_ERROR
+                "C++ coverage is only supported with GCC or Clang")
+    endif()
+endif()
 
 target_link_libraries(${JL_TARGET}
     JlCxx::cxxwrap_julia
