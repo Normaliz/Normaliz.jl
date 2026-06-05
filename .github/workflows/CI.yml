@@ -75,15 +75,26 @@ jobs:
 
       - name: "Process code coverage"
         uses: julia-actions/julia-processcoverage@v1
+      - name: "Install gcovr"
+        if: ${{ matrix.cxx-coverage == true }}
+        run: python3 -m pip install --user gcovr
       - name: "Process C++ coverage"
         if: ${{ matrix.cxx-coverage == true }}
         run: |
-          find deps/src/build -name '*.gcda' -exec gcov -pb -r -s "$PWD" {} \;
+          python3 -m gcovr \
+            --root "$PWD" \
+            --filter deps/src/normaliz.cpp \
+            --gcov-object-directory deps/src/build \
+            --lcov cxx.lcov
+          cat cxx.lcov >> lcov.info
       - name: "Upload coverage data to Codecov"
         continue-on-error: true
         uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          disable_search: true
+          files: lcov.info
+          plugins: noop
 
   docs:
     name: Documentation
