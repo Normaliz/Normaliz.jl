@@ -21,21 +21,24 @@ Here is an example of using Normaliz.jl:
 ```jldoctest
 julia> using Normaliz
 
-julia> xx = Normaliz.NmzMatrix{Normaliz.NmzRational}([1 2 ; 3 5])
-2×2 Normaliz.NmzMatrixAllocated{Normaliz.NmzRational}:
- 1  2
- 3  5
-
-julia> yy = Normaliz.LongLongCone( Dict( :cone => xx ) )
+julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1])
 Normaliz cone
 
-julia> Normaliz.get_matrix_cone_property( yy, "ExtremeRays" )
-2×2 Normaliz.NmzMatrixAllocated{CxxWrap.CxxWrapCore.CxxLongLong}:
+julia> cone_property(C, :HilbertBasis)
+2×2 Matrix{BigInt}:
  1  2
  3  5
 
-julia> Normaliz.get_matrix_cone_property( yy, "SupportHyperplanes" )
-2×2 Normaliz.NmzMatrixAllocated{CxxWrap.CxxWrapCore.CxxLongLong}:
- -5   3
-  2  -1
+julia> cone_property(C, :EmbeddingDim)
+2
+```
+
+## Public API
+
+```@docs
+Cone
+cone_property
+known_cone_properties
+computed_cone_properties
+is_computed
 ```
