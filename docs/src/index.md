@@ -7,7 +7,7 @@ lattice polytopes, and rational cones.
 
 ## Installation
 
-To use Normaliz.jl we require Julia 1.6 or higher. Please see
+To use Normaliz.jl we require Julia 1.10 or higher. Please see
 <https://julialang.org/downloads/> for instructions on
 how to obtain julia for your system.
 
