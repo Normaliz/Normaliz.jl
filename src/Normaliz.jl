@@ -5,6 +5,9 @@ import normaliz_jll
 
 using CxxWrap
 
+export Cone
+export computed_cone_properties, cone_property, is_computed, known_cone_properties
+
 get_libnormaliz_julia_path() = joinpath(@__DIR__, "..", "deps", "src", "build", "lib", "libnormaliz_julia.$(Libdl.dlext)")
 @wrapmodule(get_libnormaliz_julia_path, :define_module_normaliz)
 
@@ -52,8 +55,66 @@ Base.show(io::IO,x::Cone) = print(io,"Normaliz cone")
 
 _string_vector(x) = String.(collect(x))
 
+"""
+    known_cone_properties() -> Vector{String}
+
+Return the names of cone properties known to Normaliz.
+
+# Examples
+
+```jldoctest
+julia> using Normaliz
+
+julia> "HilbertBasis" in known_cone_properties()
+true
+```
+"""
 known_cone_properties() = _string_vector(_known_cone_properties())
+
+"""
+    computed_cone_properties(cone::Cone) -> Vector{String}
+
+Return the names of properties that have already been computed for `cone`.
+
+# Examples
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; cone = [1 2; 3 5]);
+
+julia> "ExtremeRays" in computed_cone_properties(C)
+false
+
+julia> cone_property(C, :ExtremeRays);
+
+julia> "ExtremeRays" in computed_cone_properties(C)
+true
+```
+"""
 computed_cone_properties(cone::Cone) = _string_vector(_computed_cone_properties(cone))
+
+"""
+    is_computed(cone::Cone, property::Union{AbstractString,Symbol}) -> Bool
+
+Return whether `property` has already been computed for `cone`.
+
+# Examples
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; cone = [1 2; 3 5]);
+
+julia> is_computed(C, :ExtremeRays)
+false
+
+julia> cone_property(C, :ExtremeRays);
+
+julia> is_computed(C, :ExtremeRays)
+true
+```
+"""
 is_computed(cone::Cone, property::AbstractString) = _is_computed(cone, property)
 is_computed(cone::Cone, property::Symbol) = is_computed(cone, String(property))
 
@@ -67,6 +128,31 @@ _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzInteger}) =
 _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzRational}) =
     convert.(Rational{BigInt}, collect(x))
 
+"""
+    cone_property(cone::Cone, property::Union{AbstractString,Symbol})
+
+Compute and return `property` for `cone`.
+
+The result is converted to ordinary Julia objects where this is supported,
+for example `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
+`Rational{BigInt}`, `Float64`, `Int`, or `Bool`.
+
+# Examples
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1]);
+
+julia> cone_property(C, :HilbertBasis)
+2×2 Matrix{BigInt}:
+ 1  2
+ 3  5
+
+julia> cone_property(C, :EmbeddingDim)
+2
+```
+"""
 function cone_property(cone::Cone, property::AbstractString)
     output_type = _cone_property_output_type(property)
     if output_type == "Matrix"
@@ -171,6 +257,31 @@ function LongLongCone(input::AbstractDict)
     return _LongLongCone(input_keys, input_matrices)
 end
 
+"""
+    Cone(input::AbstractDict; type::Symbol = :gmp)
+    Cone(; type::Symbol = :gmp, kwargs...)
+
+Construct a Normaliz cone from Julia matrices.
+
+Inputs use Normaliz input names as keyword arguments or as `Symbol` keys in a
+dictionary, for example `:cone` and `:grading`. Matrix entries must be
+convertible to rational numbers. By default, Normaliz uses arbitrary precision
+integer arithmetic; pass `type = :longlong` to use 64-bit integer arithmetic.
+
+# Examples
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1])
+Normaliz cone
+
+julia> cone_property(C, :HilbertBasis)
+2×2 Matrix{BigInt}:
+ 1  2
+ 3  5
+```
+"""
 function Cone(input::AbstractDict; type::Symbol = :gmp)
     if type in (:gmp, :bigint, :NmzInteger)
         return GMPCone(input)
