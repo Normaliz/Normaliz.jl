@@ -6,6 +6,9 @@ using normaliz_jll
 
 # Parse some basic command-line arguments
 const verbose = "--verbose" in ARGS
+const cxx_coverage =
+    lowercase(get(ENV, "NORMALIZ_JL_CXX_COVERAGE", "false")) in
+    ("1", "true", "yes", "on")
 
 jlcxx_cmake_dir = joinpath(CxxWrap.prefix_path(), "lib", "cmake", "JlCxx")
 julia_exec = joinpath(Sys.BINDIR, Base.julia_exename())
@@ -48,7 +51,8 @@ CMake_jll.cmake() do exe
   run(`$exe
       -DJulia_EXECUTABLE=$julia_exec
       -DJlCxx_DIR=$jlcxx_cmake_dir
-      -DCMAKE_BUILD_TYPE=Release
+      -DCMAKE_BUILD_TYPE=$(cxx_coverage ? "Debug" : "Release")
+      -DNORMALIZ_JULIA_ENABLE_COVERAGE=$(cxx_coverage ? "ON" : "OFF")
       -Dnormaliz_prefix=$(jll_artifact_dir(normaliz_jll))
       -Dgmp_prefix=$(jll_artifact_dir(normaliz_jll.GMP_jll))
       -Dmpfr_prefix=$(jll_artifact_dir(normaliz_jll.MPFR_jll))
@@ -67,7 +71,7 @@ CMake_jll.cmake() do exe
 
   run(`$exe
       --build $(builddir)
-      --config Release
+      --config $(cxx_coverage ? "Debug" : "Release")
       --
       -j$(div(Sys.CPU_THREADS,2))
   `)
