@@ -57,18 +57,28 @@ computed_cone_properties(cone::Cone) = _string_vector(_computed_cone_properties(
 is_computed(cone::Cone, property::AbstractString) = _is_computed(cone, property)
 is_computed(cone::Cone, property::Symbol) = is_computed(cone, String(property))
 
+_julia_cone_property(x) = x
+_julia_cone_property(x::NmzInteger) = convert(BigInt, x)
+_julia_cone_property(x::NmzRational) = convert(Rational{BigInt}, x)
+_julia_cone_property(x::NmzMatrix{NmzInteger}) = Matrix{BigInt}(x)
+_julia_cone_property(x::NmzMatrix{NmzRational}) = Matrix{Rational{BigInt}}(x)
+_julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzInteger}) =
+    convert.(BigInt, collect(x))
+_julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzRational}) =
+    convert.(Rational{BigInt}, collect(x))
+
 function cone_property(cone::Cone, property::AbstractString)
     output_type = _cone_property_output_type(property)
     if output_type == "Matrix"
-        return get_matrix_cone_property(cone, property)
+        return _julia_cone_property(get_matrix_cone_property(cone, property))
     elseif output_type == "Vector"
-        return get_vector_cone_property(cone, property)
+        return _julia_cone_property(get_vector_cone_property(cone, property))
     elseif output_type == "Integer"
-        return get_integer_cone_property(cone, property)
+        return _julia_cone_property(get_integer_cone_property(cone, property))
     elseif output_type == "GMPInteger"
-        return get_gmp_integer_cone_property(cone, property)
+        return _julia_cone_property(get_gmp_integer_cone_property(cone, property))
     elseif output_type == "Rational"
-        return get_rational_cone_property(cone, property)
+        return _julia_cone_property(get_rational_cone_property(cone, property))
     elseif output_type == "Float"
         return get_float_cone_property(cone, property)
     elseif output_type == "MachineInteger"
@@ -159,6 +169,19 @@ end
 function LongLongCone(input::AbstractDict)
     input_keys, input_matrices = _normaliz_input(input)
     return _LongLongCone(input_keys, input_matrices)
+end
+
+function Cone(input::AbstractDict; type::Symbol = :gmp)
+    if type in (:gmp, :bigint, :NmzInteger)
+        return GMPCone(input)
+    elseif type in (:longlong, :long_long, :int64, :Int64)
+        return LongLongCone(input)
+    end
+    throw(ArgumentError("unsupported Normaliz cone type: $type"))
+end
+
+function Cone(; type::Symbol = :gmp, kwargs...)
+    return Cone(Dict{Symbol,Any}(kwargs); type)
 end
 
 Cone{NmzInteger}(args...) = GMPCone(args...)
