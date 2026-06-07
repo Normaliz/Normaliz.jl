@@ -1,5 +1,6 @@
 Manifest.toml
 /deps/build.log
+/deps/build-*/
 /deps/Normaliz/
 /deps/src/build/
 /docs/build/

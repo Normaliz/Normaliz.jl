@@ -62,6 +62,8 @@ jobs:
         uses: julia-actions/julia-runtest@v1
         with:
           depwarn: error
+        env:
+          NORMALIZ_JL_CXX_COVERAGE: ${{ matrix.cxx-coverage == true && 'true' || 'false' }}
       - name: "Run doctests"
         if: ${{ matrix.julia-version == '1.10' }}
         run: |
@@ -85,11 +87,12 @@ jobs:
           gcovr \
             --root "$PWD" \
             --filter deps/src/normaliz.cpp \
-            --gcov-object-directory deps/src/build \
+            --gcov-object-directory deps/build-* \
             --exclude-throw-branches \
             --xml-pretty \
             --output coverage.xml \
-            --print-summary
+            --print-summary \
+            deps/build-*
       - name: "Upload coverage data to Codecov"
         continue-on-error: true
         uses: codecov/codecov-action@v6

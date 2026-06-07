@@ -8,6 +8,7 @@ CxxWrap = "1f15a43c-97ca-5a2a-ae31-89f07a497df4"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 Nemo = "2edaba10-b0f1-5616-af89-8c11ac63239a"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 normaliz_jll = "6690c6e9-4e12-53b8-b8fd-4bffaef8839f"
 
 [compat]
@@ -17,6 +18,7 @@ CxxWrap = "0.17"
 Libdl = "1.10"
 Nemo = "0.50, 0.51, 0.52, 0.53, 0.54, 0.55"
 Pkg = "1.10"
+SHA = "0.7"
 normaliz_jll = "300.1100.100"
 
 [extras]

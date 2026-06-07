@@ -1,14 +1,13 @@
 module Normaliz
 
-import Libdl
-import normaliz_jll
-
 using CxxWrap
 
 export Cone
 export computed_cone_properties, cone_property, is_computed, known_cone_properties
 
-get_libnormaliz_julia_path() = joinpath(@__DIR__, "..", "deps", "src", "build", "lib", "libnormaliz_julia.$(Libdl.dlext)")
+include("setup.jl")
+
+get_libnormaliz_julia_path() = Setup.locate_libnormaliz_julia()
 @wrapmodule(get_libnormaliz_julia_path, :define_module_normaliz)
 
 function __init__()
