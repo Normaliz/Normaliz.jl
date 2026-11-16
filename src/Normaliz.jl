@@ -50,7 +50,8 @@ Base.setindex!(M::NmzMatrix{T},x::Int64,dims...) where T = _setindex!(M,convert(
 #
 Base.show(io::IO,x::NmzInteger) = print(io,to_string(x))
 Base.show(io::IO,x::NmzRational) = print(io,to_string(x))
-Base.show(io::IO,x::Cone) = print(io,"Normaliz cone")
+Base.show(io::IO, x::Cone) =
+    print(io, "Normaliz cone of embedding dimension ", _embedding_dim(x))
 
 _string_vector(x) = String.(collect(x))
 
@@ -352,7 +353,7 @@ integer arithmetic; pass `type = :longlong` to use 64-bit integer arithmetic.
 julia> using Normaliz
 
 julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1])
-Normaliz cone
+Normaliz cone of embedding dimension 2
 
 julia> cone_property(C, :HilbertBasis)
 2×2 Matrix{BigInt}:
