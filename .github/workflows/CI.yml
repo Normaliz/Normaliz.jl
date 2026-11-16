@@ -63,7 +63,7 @@ jobs:
         with:
           depwarn: error
       - name: "Run doctests"
-        if: ${{ matrix.julia-version == '1.10' }}
+        if: ${{ matrix.julia-version == 'lts' }}
         run: |
           julia --project=docs --color=yes --code-coverage -e '
             using Pkg
