@@ -1,5 +1,4 @@
 using CxxWrap
-import CMake_jll
 using Pkg.Artifacts
 
 using normaliz_jll
@@ -47,32 +46,39 @@ else
   libomp_path = normaliz_jll.CompilerSupportLibraries_jll.get_libgomp_path()
 end
 
-CMake_jll.cmake() do exe
-  run(`$exe
-      -DJulia_EXECUTABLE=$julia_exec
-      -DJlCxx_DIR=$jlcxx_cmake_dir
-      -DCMAKE_BUILD_TYPE=$(cxx_coverage ? "Debug" : "Release")
-      -DNORMALIZ_JULIA_ENABLE_COVERAGE=$(cxx_coverage ? "ON" : "OFF")
-      -Dnormaliz_prefix=$(jll_artifact_dir(normaliz_jll))
-      -Dgmp_prefix=$(jll_artifact_dir(normaliz_jll.GMP_jll))
-      -Dmpfr_prefix=$(jll_artifact_dir(normaliz_jll.MPFR_jll))
-      -Dnauty_prefix=$(jll_artifact_dir(normaliz_jll.nauty_jll))
-      -Dflint_prefix=$(jll_artifact_dir(normaliz_jll.FLINT_jll))
-      -Dlibnormaliz_path=$(normaliz_jll.get_libnormaliz_path())
-      -Dlibgmp_path=$(normaliz_jll.GMP_jll.get_libgmp_path())
-      -Dlibgmpxx_path=$(normaliz_jll.GMP_jll.get_libgmpxx_path())
-      -Dlibmpfr_path=$(normaliz_jll.MPFR_jll.get_libmpfr_path())
-      -Dlibnauty_path=$(normaliz_jll.nauty_jll.get_libnauty_path())
-      -Dlibflint_path=$(normaliz_jll.FLINT_jll.get_libflint_path())
-      -Dlibomp_path=$libomp_path
-      -B $(builddir)
-      -S .
-  `)
-
-  run(`$exe
-      --build $(builddir)
-      --config $(cxx_coverage ? "Debug" : "Release")
-      --
-      -j$(div(Sys.CPU_THREADS,2))
-  `)
+# Use the system cmake rather than CMake_jll: the latter puts Julia's private
+# libdir on LD_LIBRARY_PATH, and on Julia 1.10 its libstdc++ is older than the
+# one a system compiler or ccache needs ("CXXABI_1.3.15 not found").
+try
+  run(`cmake --version`)
+catch
+  error("Could not locate 'cmake' binary, needed to build libnormaliz_julia")
 end
+
+run(`cmake
+    -DJulia_EXECUTABLE=$julia_exec
+    -DJlCxx_DIR=$jlcxx_cmake_dir
+    -DCMAKE_BUILD_TYPE=$(cxx_coverage ? "Debug" : "Release")
+    -DNORMALIZ_JULIA_ENABLE_COVERAGE=$(cxx_coverage ? "ON" : "OFF")
+    -Dnormaliz_prefix=$(jll_artifact_dir(normaliz_jll))
+    -Dgmp_prefix=$(jll_artifact_dir(normaliz_jll.GMP_jll))
+    -Dmpfr_prefix=$(jll_artifact_dir(normaliz_jll.MPFR_jll))
+    -Dnauty_prefix=$(jll_artifact_dir(normaliz_jll.nauty_jll))
+    -Dflint_prefix=$(jll_artifact_dir(normaliz_jll.FLINT_jll))
+    -Dlibnormaliz_path=$(normaliz_jll.get_libnormaliz_path())
+    -Dlibgmp_path=$(normaliz_jll.GMP_jll.get_libgmp_path())
+    -Dlibgmpxx_path=$(normaliz_jll.GMP_jll.get_libgmpxx_path())
+    -Dlibmpfr_path=$(normaliz_jll.MPFR_jll.get_libmpfr_path())
+    -Dlibnauty_path=$(normaliz_jll.nauty_jll.get_libnauty_path())
+    -Dlibflint_path=$(normaliz_jll.FLINT_jll.get_libflint_path())
+    -Dlibomp_path=$libomp_path
+    -B $(builddir)
+    -S .
+`)
+
+run(`cmake
+    --build $(builddir)
+    --config $(cxx_coverage ? "Debug" : "Release")
+    --
+    -j$(div(Sys.CPU_THREADS,2))
+`)
