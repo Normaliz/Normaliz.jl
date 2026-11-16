@@ -49,10 +49,6 @@ jobs:
           version: ${{ matrix.julia-version }}
       - name: "Cache artifacts"
         uses: julia-actions/cache@v3
-      - name: "Build package"
-        uses: julia-actions/julia-buildpkg@v1
-        env:
-          NORMALIZ_JL_CXX_COVERAGE: ${{ matrix.cxx-coverage == true && 'true' || 'false' }}
       - name: "Run tests"
         uses: julia-actions/julia-runtest@v1
         with:
@@ -82,12 +78,11 @@ jobs:
           gcovr \
             --root "$PWD" \
             --filter deps/src/normaliz.cpp \
-            --gcov-object-directory deps/build-* \
+            --gcov-object-directory "deps/build-$(julia -e 'print(VERSION)')" \
             --exclude-throw-branches \
             --xml-pretty \
             --output coverage.xml \
-            --print-summary \
-            deps/build-*
+            --print-summary
       - name: "Upload coverage data to Codecov"
         continue-on-error: true
         uses: codecov/codecov-action@v7
@@ -108,8 +103,6 @@ jobs:
           version: '1.10'
       - name: "Cache artifacts"
         uses: julia-actions/cache@v3
-      - name: "Build package"
-        uses: julia-actions/julia-buildpkg@v1
       - run: |
           julia --project=docs --color=yes -e '
             using Pkg
