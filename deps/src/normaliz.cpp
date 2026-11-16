@@ -308,9 +308,10 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                     for (const auto& name : names) {
                         properties.set(libnormaliz::toConeProperty(name));
                     }
-                    // compute returns the requested goals that could not be
-                    // computed; report whether all of them were
-                    return C.compute(properties).goals().none();
+                    // compute throws NotComputableException if a goal cannot
+                    // be computed, unless DefaultMode is set: then it returns
+                    // the goals it skipped
+                    return cone_property_names(C.compute(properties).goals());
                 });
             });
 

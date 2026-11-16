@@ -47,8 +47,8 @@ names.
 ## Computing properties together and choosing algorithms
 
 [`compute!`](@ref) computes several properties in one Normaliz run, which lets Normaliz
-share work between them. It returns whether all of them were computed; the results
-are then retrieved with `cone_property`, without computing them again.
+share work between them. The results are then retrieved with `cone_property`, without
+computing them again.
 
 Both `compute!` and `cone_property` accept Normaliz flags as `Bool` keyword arguments
 named after the flag, for example `DualMode = true` to use the dual algorithm instead
@@ -59,8 +59,7 @@ julia> using Normaliz
 
 julia> D = Cone(; cone = [1 0; 1 3], grading = [1 0]);
 
-julia> compute!(D, :HilbertBasis, :SupportHyperplanes; DualMode = true)
-true
+julia> compute!(D, :HilbertBasis, :SupportHyperplanes; DualMode = true);
 
 julia> cone_property(D, :SupportHyperplanes)
 2×2 Matrix{BigInt}:
