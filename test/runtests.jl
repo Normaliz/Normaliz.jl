@@ -238,6 +238,84 @@ end
   @test occursin("Complex", err.value.msg)
 end
 
+@testset "compute! with flags" begin
+  for type in (:gmp, :longlong)
+    yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1], type)
+    @test !Normaliz.is_computed(yy, :HilbertBasis)
+    @test Normaliz.compute!(yy, :HilbertBasis, "Multiplicity"; DualMode = true) === yy
+    @test Normaliz.is_computed(yy, :HilbertBasis)
+    @test Normaliz.is_computed(yy, :Multiplicity)
+    @test Normaliz.cone_property(yy, :HilbertBasis) == BigInt[1 2 ; 3 5]
+  end
+
+  # the flag reaches Normaliz: the dual algorithm computes no triangulation
+  yy = Normaliz.Cone(; cone = [1 2 3; 4 5 1; 2 7 3; 1 1 1])
+  Normaliz.compute!(yy, :HilbertBasis)
+  @test Normaliz.is_computed(yy, :TriangulationSize)
+  yy = Normaliz.Cone(; cone = [1 2 3; 4 5 1; 2 7 3; 1 1 1])
+  Normaliz.compute!(yy, :HilbertBasis; DualMode = true)
+  @test !Normaliz.is_computed(yy, :TriangulationSize)
+  yy = Normaliz.Cone(; cone = [1 2 3; 4 5 1; 2 7 3; 1 1 1])
+  Normaliz.cone_property(yy, :HilbertBasis; DualMode = true)
+  @test !Normaliz.is_computed(yy, :TriangulationSize)
+
+  # flags may also be given positionally, as Normaliz treats them as properties
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  Normaliz.compute!(yy, :ExtremeRays, :PrimalMode)
+  @test Normaliz.is_computed(yy, :ExtremeRays)
+
+  # flags set to false are ignored
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  Normaliz.compute!(yy, :ExtremeRays; DualMode = true, PrimalMode = false)
+  @test Normaliz.is_computed(yy, :ExtremeRays)
+
+  # at least one property is required
+  @test_throws MethodError Normaliz.compute!(yy)
+  @test_throws MethodError Normaliz.compute!(yy; DualMode = true)
+
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  err = @test_throws ArgumentError Normaliz.compute!(yy, :HilbertBasis; DualMode = 1)
+  @test occursin("DualMode", err.value.msg)
+  err = @test_throws ErrorException Normaliz.compute!(yy, :HilbertBasis; NotAFlag = true)
+  @test occursin("Unknown ConeProperty", sprint(showerror, err.value))
+  err = @test_throws ErrorException Normaliz.compute!(yy, :HilbertBasis;
+                                                      DualMode = true, PrimalMode = true)
+  @test occursin("Contradictory algorithmic variants", sprint(showerror, err.value))
+
+  # Normaliz throws for properties it cannot compute, unless DefaultMode is set
+  unbounded = [1 0 0; 0 1 0; 1 1 -1]  # x, y >= 0, x + y >= 1, with no grading
+  yy = Normaliz.Cone(; inhom_inequalities = unbounded)
+  err = @test_throws ErrorException Normaliz.compute!(yy, :Multiplicity)
+  @test occursin("Could not compute", sprint(showerror, err.value))
+  yy = Normaliz.Cone(; inhom_inequalities = unbounded)
+  @test Normaliz.compute!(yy, :Multiplicity, :HilbertBasis; DefaultMode = true) === yy
+  @test Normaliz.is_computed(yy, :HilbertBasis)
+  @test !Normaliz.is_computed(yy, :Multiplicity)
+end
+
+@testset "cone_property with flags" begin
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1])
+  @test Normaliz.cone_property(yy, :HilbertBasis; DualMode = true) == BigInt[1 2 ; 3 5]
+  @test Normaliz.cone_property(yy, "Multiplicity"; BigInt = true) isa Rational{BigInt}
+
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  @test Normaliz.cone_property(yy, :ExtremeRays; DualMode = false) isa Matrix{BigInt}
+  @test_throws ArgumentError Normaliz.cone_property(yy, :HilbertBasis; DualMode = "yes")
+  err = @test_throws ErrorException Normaliz.cone_property(yy, :HilbertBasis; NotAFlag = true)
+  @test occursin("Unknown ConeProperty", sprint(showerror, err.value))
+
+  # unsupported output types are rejected before computing anything
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1])
+  err = @test_throws ArgumentError Normaliz.cone_property(yy, :HilbertSeries; DualMode = true)
+  @test occursin("Complex", err.value.msg)
+  @test !Normaliz.is_computed(yy, :HilbertSeries)
+
+  # a property skipped under DefaultMode is not silently computed without the flags
+  yy = Normaliz.Cone(; inhom_inequalities = [1 0 0; 0 1 0; 1 1 -1])
+  err = @test_throws ErrorException Normaliz.cone_property(yy, :Multiplicity; DefaultMode = true)
+  @test occursin("could not compute Multiplicity", sprint(showerror, err.value))
+end
+
 @testset "cone property output types" begin
   @test String(Normaliz._cone_property_output_type("HilbertBasis")) == "Matrix"
   @test String(Normaliz._cone_property_output_type("ExtremeRaysFloat")) == "MatrixFloat"

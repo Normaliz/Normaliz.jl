@@ -3,7 +3,7 @@ module Normaliz
 using CxxWrap
 
 export Cone
-export computed_cone_properties, cone_property, is_computed, known_cone_properties
+export compute!, computed_cone_properties, cone_property, is_computed, known_cone_properties
 
 include("setup.jl")
 
@@ -57,7 +57,8 @@ _string_vector(x) = String.(collect(x))
 """
     known_cone_properties() -> Vector{String}
 
-Return the names of cone properties known to Normaliz.
+Return the names of cone properties known to Normaliz, i.e. the properties that can be
+computed with [`compute!`](@ref).
 
 # Examples
 
@@ -127,14 +128,40 @@ _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzInteger}) =
 _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzRational}) =
     convert.(Rational{BigInt}, collect(x))
 
+function _flag_names(flags)
+    names = String[]
+    for (name, value) in pairs(flags)
+        value isa Bool || throw(ArgumentError(
+            "Normaliz flag $name must be true or false, got $(repr(value))"))
+        value && push!(names, String(name))
+    end
+    return names
+end
+
 """
-    cone_property(cone::Cone, property::Union{AbstractString,Symbol})
+    compute!(cone::Cone, property, properties...; flags...) -> Cone
 
-Compute and return `property` for `cone`.
+Compute one or more properties for `cone` in a single Normaliz run, and return
+`cone`. The results are not returned: retrieve them afterwards with
+[`cone_property`](@ref), which does not compute them again. Normaliz throws an error
+if it cannot compute one of the properties, unless the flag `DefaultMode = true` is
+given, in which case it skips such properties (see [`is_computed`](@ref)).
 
-The result is converted to ordinary Julia objects where this is supported,
-for example `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
-`Rational{BigInt}`, `Float64`, `Int`, or `Bool`.
+Use `compute!` to compute several properties together, which lets Normaliz share work
+between them instead of requesting them one by one. To compute and retrieve a single
+property, call `cone_property` directly.
+
+Property names are those listed by [`known_cone_properties`](@ref). `flags` select
+how Normaliz computes them, given as `Bool` keyword arguments named after the Normaliz
+flag, e.g. `DualMode = true` to use the dual algorithm, or `BigInt = true` to compute
+with arbitrary precision integers. Flags set to `false` are ignored. Any flag known to
+Normaliz is accepted; see the section "Computation goals and algorithmic variants" of
+the [Normaliz manual](https://github.com/Normaliz/Normaliz/blob/master/doc/Normaliz.pdf).
+Normaliz throws an error for unknown names and for contradictory flags, such as
+`DualMode` together with `PrimalMode`.
+
+Normaliz never recomputes a property, so `flags` have no effect on properties that
+have already been computed (see [`is_computed`](@ref)).
 
 # Examples
 
@@ -143,7 +170,52 @@ julia> using Normaliz
 
 julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1]);
 
-julia> cone_property(C, :HilbertBasis)
+julia> compute!(C, :HilbertBasis, :Multiplicity; DualMode = true);
+
+julia> cone_property(C, :Multiplicity)
+1//24
+```
+"""
+function compute!(cone::Cone, property::Union{AbstractString,Symbol},
+                  properties::Union{AbstractString,Symbol}...; flags...)
+    _compute_skipped(cone, (property, properties...), _flag_names(flags))
+    return cone
+end
+
+# returns the names of goals that Normaliz skipped, which happens only with DefaultMode
+function _compute_skipped(cone::Cone, properties, flag_names::Vector{String})
+    names = String[String(p) for p in properties]
+    append!(names, flag_names)
+    return _string_vector(
+        _compute(cone, CxxWrap.StdLib.StdVector{CxxWrap.StdLib.StdString}(names)))
+end
+
+# Normaliz output types that `cone_property` converts to Julia objects
+const _SUPPORTED_OUTPUT_TYPES = ("Matrix", "Vector", "Integer", "GMPInteger",
+                                  "Rational", "Float", "MachineInteger", "Bool")
+
+"""
+    cone_property(cone::Cone, property::Union{AbstractString,Symbol}; flags...)
+
+Return `property` of `cone`, computing it first if it has not been computed yet.
+
+Property names are those listed by [`known_cone_properties`](@ref). The result is
+converted to an ordinary Julia object: `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
+`Rational{BigInt}`, `Float64`, `Int`, or `Bool`, depending on the property.
+Properties with other kinds of results, such as `Triangulation` or `HilbertSeries`,
+are not yet supported and throw an `ArgumentError`.
+
+`flags` are `Bool` keyword arguments, e.g. `DualMode = true`, exactly as for
+[`compute!`](@ref).
+
+# Examples
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1]);
+
+julia> cone_property(C, :HilbertBasis; DualMode = true)
 2×2 Matrix{BigInt}:
  1  2
  3  5
@@ -152,8 +224,17 @@ julia> cone_property(C, :EmbeddingDim)
 2
 ```
 """
-function cone_property(cone::Cone, property::AbstractString)
-    output_type = _cone_property_output_type(property)
+function cone_property(cone::Cone, property::AbstractString; flags...)
+    output_type = String(_cone_property_output_type(property))
+    output_type in _SUPPORTED_OUTPUT_TYPES || throw(ArgumentError(
+        "cone property $property has unsupported output type $output_type"))
+    flag_names = _flag_names(flags)
+    if !isempty(flag_names)
+        # with DefaultMode, Normaliz may skip the property; the getter below would then
+        # compute it without the flags
+        property in _compute_skipped(cone, (property,), flag_names) && error(
+            "Normaliz could not compute $property with flags $(join(flag_names, ", "))")
+    end
     if output_type == "Matrix"
         return _julia_cone_property(get_matrix_cone_property(cone, property))
     elseif output_type == "Vector"
@@ -168,15 +249,13 @@ function cone_property(cone::Cone, property::AbstractString)
         return get_float_cone_property(cone, property)
     elseif output_type == "MachineInteger"
         return get_machine_integer_cone_property(cone, property)
-    elseif output_type == "Bool"
+    else # output_type == "Bool"
         return get_boolean_cone_property(cone, property)
     end
-    throw(ArgumentError(
-        "cone property $property has unsupported output type $output_type"))
 end
 
-cone_property(cone::Cone, property::Symbol) =
-    cone_property(cone, String(property))
+cone_property(cone::Cone, property::Symbol; flags...) =
+    cone_property(cone, String(property); flags...)
 
 get_matrix_cone_property(cone, property::Symbol) =
     get_matrix_cone_property(cone, String(property))

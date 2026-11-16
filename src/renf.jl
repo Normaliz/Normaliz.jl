@@ -1,5 +1,3 @@
-import Nemo: fmpq_poly
-
 Base.show(io::IO,x::Renf) = print(io,to_string(x))
 Base.show(io::IO,x::RenfClass) = print(io,to_string(x))
 
@@ -21,11 +19,6 @@ end
 #   # TODO: make this work (again) without NmzVector
 #   return renf_construct(f, NmzVector{NmzRational}([v]))
 #end
-
-function Renf(f::RenfClass,p::fmpq_poly)
-   # TODO: make this work (again)
-   return renf_construct_fmpq_poly(f,reinterpret(Ptr{Cvoid},pointer_from_objref(p)))
-end
 
 function RenfClass(minpoly::String, gen::String, emb::String, prec::Int = 64)
   # TODO: make this work
