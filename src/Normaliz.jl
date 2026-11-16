@@ -6,7 +6,7 @@ import normaliz_jll
 using CxxWrap
 
 export Cone
-export computed_cone_properties, cone_property, is_computed, known_cone_properties
+export compute!, computed_cone_properties, cone_property, is_computed, known_cone_properties
 
 get_libnormaliz_julia_path() = joinpath(@__DIR__, "..", "deps", "src", "build", "lib", "libnormaliz_julia.$(Libdl.dlext)")
 @wrapmodule(get_libnormaliz_julia_path, :define_module_normaliz)
@@ -128,14 +128,30 @@ _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzInteger}) =
 _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzRational}) =
     convert.(Rational{BigInt}, collect(x))
 
+function _flag_names(flags)
+    names = String[]
+    for (name, value) in pairs(flags)
+        value isa Bool || throw(ArgumentError(
+            "Normaliz flag $name must be true or false, got $(repr(value))"))
+        value && push!(names, String(name))
+    end
+    return names
+end
+
 """
-    cone_property(cone::Cone, property::Union{AbstractString,Symbol})
+    compute!(cone::Cone, properties::Union{AbstractString,Symbol}...; flags...) -> Bool
 
-Compute and return `property` for `cone`.
+Compute `properties` for `cone` in a single Normaliz run, and return whether all of
+them could be computed. Retrieve the results with [`cone_property`](@ref).
 
-The result is converted to ordinary Julia objects where this is supported,
-for example `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
-`Rational{BigInt}`, `Float64`, `Int`, or `Bool`.
+`flags` are Normaliz flags given as `Bool` keyword arguments named after them,
+e.g. `DualMode = true` to use the dual algorithm, or `BigInt = true` to compute with
+arbitrary precision. A flag set to `false` is ignored. Any flag known to Normaliz
+is accepted; see the Normaliz documentation for the full list. Normaliz throws an error
+for contradictory flags, such as `DualMode` together with `PrimalMode`.
+
+Normaliz does not recompute a property that has already been computed, so `flags`
+have no effect on properties for which [`is_computed`](@ref) is `true`.
 
 # Examples
 
@@ -144,7 +160,40 @@ julia> using Normaliz
 
 julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1]);
 
-julia> cone_property(C, :HilbertBasis)
+julia> compute!(C, :HilbertBasis, :Multiplicity; DualMode = true)
+true
+
+julia> cone_property(C, :Multiplicity)
+1//24
+```
+"""
+function compute!(cone::Cone, properties::Union{AbstractString,Symbol}...; flags...)
+    names = String[String(property) for property in properties]
+    append!(names, _flag_names(flags))
+    return _compute(cone, CxxWrap.StdLib.StdVector{CxxWrap.StdLib.StdString}(names))
+end
+
+"""
+    cone_property(cone::Cone, property::Union{AbstractString,Symbol}; flags...)
+
+Compute and return `property` for `cone`.
+
+The result is converted to ordinary Julia objects where this is supported,
+for example `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
+`Rational{BigInt}`, `Float64`, `Int`, or `Bool`.
+
+`flags` are Normaliz flags given as `Bool` keyword arguments, as for
+[`compute!`](@ref), e.g. `DualMode = true`. They have no effect if `property` has already
+been computed.
+
+# Examples
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1]);
+
+julia> cone_property(C, :HilbertBasis; DualMode = true)
 2×2 Matrix{BigInt}:
  1  2
  3  5
@@ -153,7 +202,11 @@ julia> cone_property(C, :EmbeddingDim)
 2
 ```
 """
-function cone_property(cone::Cone, property::AbstractString)
+function cone_property(cone::Cone, property::AbstractString; flags...)
+    flag_names = _flag_names(flags)
+    if !isempty(flag_names)
+        compute!(cone, property, flag_names...)
+    end
     output_type = _cone_property_output_type(property)
     if output_type == "Matrix"
         return _julia_cone_property(get_matrix_cone_property(cone, property))
@@ -176,8 +229,8 @@ function cone_property(cone::Cone, property::AbstractString)
         "cone property $property has unsupported output type $output_type"))
 end
 
-cone_property(cone::Cone, property::Symbol) =
-    cone_property(cone, String(property))
+cone_property(cone::Cone, property::Symbol; flags...) =
+    cone_property(cone, String(property); flags...)
 
 get_matrix_cone_property(cone, property::Symbol) =
     get_matrix_cone_property(cone, String(property))

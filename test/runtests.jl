@@ -238,6 +238,55 @@ end
   @test occursin("Complex", err.value.msg)
 end
 
+@testset "compute! with flags" begin
+  for type in (:gmp, :longlong)
+    yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1], type)
+    @test !Normaliz.is_computed(yy, :HilbertBasis)
+    @test Normaliz.compute!(yy, :HilbertBasis, "Multiplicity"; DualMode = true) === true
+    @test Normaliz.is_computed(yy, :HilbertBasis)
+    @test Normaliz.is_computed(yy, :Multiplicity)
+    @test Normaliz.cone_property(yy, :HilbertBasis) == BigInt[1 2 ; 3 5]
+  end
+
+  # the flag reaches Normaliz: the dual algorithm computes no triangulation
+  yy = Normaliz.Cone(; cone = [1 2 3; 4 5 1; 2 7 3; 1 1 1])
+  Normaliz.compute!(yy, :HilbertBasis)
+  @test Normaliz.is_computed(yy, :TriangulationSize)
+  yy = Normaliz.Cone(; cone = [1 2 3; 4 5 1; 2 7 3; 1 1 1])
+  Normaliz.compute!(yy, :HilbertBasis; DualMode = true)
+  @test !Normaliz.is_computed(yy, :TriangulationSize)
+  yy = Normaliz.Cone(; cone = [1 2 3; 4 5 1; 2 7 3; 1 1 1])
+  Normaliz.cone_property(yy, :HilbertBasis; DualMode = true)
+  @test !Normaliz.is_computed(yy, :TriangulationSize)
+
+  # flags may also be given positionally, as Normaliz treats them as properties
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  @test Normaliz.compute!(yy, :ExtremeRays, :PrimalMode)
+  @test Normaliz.is_computed(yy, :ExtremeRays)
+
+  # flags set to false are ignored
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  @test Normaliz.compute!(yy, :ExtremeRays; DualMode = true, PrimalMode = false)
+
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  err = @test_throws ArgumentError Normaliz.compute!(yy, :HilbertBasis; DualMode = 1)
+  @test occursin("DualMode", err.value.msg)
+  @test_throws Exception Normaliz.compute!(yy, :HilbertBasis; NotAFlag = true)
+  @test_throws Exception Normaliz.compute!(yy, :HilbertBasis;
+                                           DualMode = true, PrimalMode = true)
+end
+
+@testset "cone_property with flags" begin
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1])
+  @test Normaliz.cone_property(yy, :HilbertBasis; DualMode = true) == BigInt[1 2 ; 3 5]
+  @test Normaliz.cone_property(yy, "Multiplicity"; BigInt = true) isa Rational{BigInt}
+
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  @test Normaliz.cone_property(yy, :ExtremeRays; DualMode = false) isa Matrix{BigInt}
+  @test_throws ArgumentError Normaliz.cone_property(yy, :HilbertBasis; DualMode = "yes")
+  @test_throws Exception Normaliz.cone_property(yy, :HilbertBasis; NotAFlag = true)
+end
+
 @testset "cone property output types" begin
   @test String(Normaliz._cone_property_output_type("HilbertBasis")) == "Matrix"
   @test String(Normaliz._cone_property_output_type("ExtremeRaysFloat")) == "MatrixFloat"

@@ -302,6 +302,16 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                                                   const std::string& s) {
                     return C.isComputed(libnormaliz::toConeProperty(s));
                 });
+                wrapped.method("_compute", [](WrappedT& C,
+                                              const std::vector<std::string>& names) {
+                    libnormaliz::ConeProperties properties;
+                    for (const auto& name : names) {
+                        properties.set(libnormaliz::toConeProperty(name));
+                    }
+                    // compute returns the requested goals that could not be
+                    // computed; report whether all of them were
+                    return C.compute(properties).goals().none();
+                });
             });
 
     normaliz.method("_known_cone_properties", []() {

@@ -37,6 +37,7 @@ julia> cone_property(C, :EmbeddingDim)
 
 ```@docs
 Cone
+compute!
 cone_property
 known_cone_properties
 computed_cone_properties
