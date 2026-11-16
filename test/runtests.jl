@@ -293,6 +293,43 @@ end
   @test !Normaliz.is_computed(yy, :Multiplicity)
 end
 
+@testset "Hilbert and Ehrhart series" begin
+  # the lattice triangle with vertices (0,0), (2,0), (0,3) has Ehrhart polynomial
+  # 3n^2 + 3n + 1 and h*-vector (1, 4, 1)
+  triangle = [0 0; 2 0; 0 3]
+  for type in (:gmp, :longlong)
+    yy = Normaliz.Cone(; polytope = triangle, type)
+    hs = Normaliz.cone_property(yy, :HilbertSeries)
+    @test hs == Normaliz.HilbertSeries([1, 4, 1], [1, 1, 1], 0)
+    @test Normaliz.is_computed(yy, :HilbertSeries)
+    q = Normaliz.cone_property(yy, :HilbertQuasiPolynomial)
+    @test q == Normaliz.QuasiPolynomial(BigInt[1 3 3], 1)
+    @test all(q(n) == 3n^2 + 3n + 1 for n in 0:10)
+  end
+
+  yy = Normaliz.Cone(; vertices = [triangle ones(Int, 3)])
+  @test Normaliz.cone_property(yy, :EhrhartSeries) ==
+        Normaliz.HilbertSeries([1, 4, 1], [1, 1, 1], 0)
+  @test Normaliz.cone_property(yy, :EhrhartQuasiPolynomial) ==
+        Normaliz.QuasiPolynomial(BigInt[1 3 3], 1)
+
+  # the triangle with vertices (0,0), (1/2,0), (0,1/2) has period 2
+  yy = Normaliz.Cone(; vertices = [0 0 1; 1 0 2; 0 1 2])
+  q = Normaliz.cone_property(yy, :EhrhartQuasiPolynomial)
+  @test size(q.coefficients, 1) == 2
+  @test all(q(n) == binomial(div(n, 2) + 2, 2) for n in 0:20)
+  @test Normaliz.cone_property(yy, :EhrhartSeries) ==
+        Normaliz.HilbertSeries([1], [1, 2, 2], 0)
+
+  # a monoid freely generated in degrees 3 and 8; HSOP gives that denominator
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1])
+  @test Normaliz.cone_property(yy, :HilbertSeries; HSOP = true) ==
+        Normaliz.HilbertSeries([1], [3, 8], 0)
+
+  @test hash(Normaliz.HilbertSeries([1], [3, 8], 0)) ==
+        hash(Normaliz.HilbertSeries([1], [3, 8], 0))
+end
+
 @testset "cone_property with flags" begin
   yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1])
   @test Normaliz.cone_property(yy, :HilbertBasis; DualMode = true) == BigInt[1 2 ; 3 5]
@@ -306,9 +343,9 @@ end
 
   # unsupported output types are rejected before computing anything
   yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1])
-  err = @test_throws ArgumentError Normaliz.cone_property(yy, :HilbertSeries; DualMode = true)
+  err = @test_throws ArgumentError Normaliz.cone_property(yy, :Triangulation; DualMode = true)
   @test occursin("Complex", err.value.msg)
-  @test !Normaliz.is_computed(yy, :HilbertSeries)
+  @test !Normaliz.is_computed(yy, :Triangulation)
 
   # a property skipped under DefaultMode is not silently computed without the flags
   yy = Normaliz.Cone(; inhom_inequalities = [1 0 0; 0 1 0; 1 1 -1])

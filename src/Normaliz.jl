@@ -130,6 +130,124 @@ _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzInteger}) =
 _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzRational}) =
     convert.(Rational{BigInt}, collect(x))
 
+"""
+    Normaliz.HilbertSeries
+
+A Hilbert or Ehrhart series ``t^s h(t) / ∏ᵢ (1 - t^{dᵢ})``, as returned by
+[`cone_property`](@ref) for `HilbertSeries` and `EhrhartSeries`.
+
+# Fields
+
+- `numerator::Vector{BigInt}`: the coefficients of ``h(t)``, starting with the
+  constant term
+- `denominator::Vector{Int}`: the degrees ``dᵢ``, repeated by multiplicity
+- `shift::Int`: the shift ``s``
+
+With the flag `HSOP = true`, the denominator comes from a homogeneous system of
+parameters.
+
+# Examples
+
+The triangle with vertices ``(0,0)``, ``(2,0)``, ``(0,3)`` has Ehrhart series
+``(1 + 4t + t^2) / (1 - t)^3``:
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; polytope = [0 0; 2 0; 0 3]);
+
+julia> cone_property(C, :HilbertSeries)
+Normaliz.HilbertSeries(BigInt[1, 4, 1], [1, 1, 1], 0)
+```
+"""
+struct HilbertSeries
+    numerator::Vector{BigInt}
+    denominator::Vector{Int}
+    shift::Int
+end
+
+Base.:(==)(a::HilbertSeries, b::HilbertSeries) =
+    a.numerator == b.numerator && a.denominator == b.denominator && a.shift == b.shift
+Base.hash(a::HilbertSeries, h::UInt) =
+    hash(a.numerator, hash(a.denominator, hash(a.shift, hash(HilbertSeries, h))))
+
+"""
+    Normaliz.QuasiPolynomial
+
+A Hilbert or Ehrhart quasipolynomial, as returned by [`cone_property`](@ref) for
+`HilbertQuasiPolynomial` and `EhrhartQuasiPolynomial`. It agrees with the Hilbert or
+Ehrhart function for all sufficiently large arguments; `q(n)` evaluates it at `n`.
+
+# Fields
+
+- `coefficients::Matrix{BigInt}`: row ``k + 1`` holds the coefficients, by increasing
+  degree, of the polynomial for arguments congruent to ``k`` modulo the period, which
+  is the number of rows
+- `denominator::BigInt`: the common denominator of all coefficients
+
+# Examples
+
+The ``n``-th dilation of the triangle with vertices ``(0,0)``, ``(1/2,0)``,
+``(0,1/2)`` contains ``\binom{⌊n/2⌋+2}{2}`` lattice points:
+
+```jldoctest
+julia> using Normaliz
+
+julia> C = Cone(; vertices = [0 0 1; 1 0 2; 0 1 2]);
+
+julia> q = cone_property(C, :EhrhartQuasiPolynomial)
+Normaliz.QuasiPolynomial(BigInt[8 6 1; 3 4 1], 8)
+
+julia> q.(0:5)
+6-element Vector{Rational{BigInt}}:
+ 1
+ 1
+ 3
+ 3
+ 6
+ 6
+```
+"""
+struct QuasiPolynomial
+    coefficients::Matrix{BigInt}
+    denominator::BigInt
+end
+
+Base.:(==)(a::QuasiPolynomial, b::QuasiPolynomial) =
+    a.coefficients == b.coefficients && a.denominator == b.denominator
+Base.hash(a::QuasiPolynomial, h::UInt) =
+    hash(a.coefficients, hash(a.denominator, hash(QuasiPolynomial, h)))
+
+function (q::QuasiPolynomial)(n::Integer)
+    coefficients = q.coefficients[mod(n, size(q.coefficients, 1)) + 1, :]
+    return evalpoly(BigInt(n), coefficients) // q.denominator
+end
+
+function _julia_series(cone::Cone, series)
+    # as in PyNormaliz, an HSOP computation determines the representation
+    if is_computed(cone, "HSOP")
+        return HilbertSeries(_julia_cone_property(_series_hsop_numerator(series)),
+                             collect(_series_hsop_denominator(series)),
+                             _series_shift(series))
+    end
+    return HilbertSeries(_julia_cone_property(_series_numerator(series)),
+                         collect(_series_denominator(series)),
+                         _series_shift(series))
+end
+
+_julia_quasipolynomial(series) =
+    QuasiPolynomial(Matrix{BigInt}(_quasipolynomial(series)),
+                    convert(BigInt, _quasipolynomial_denominator(series)))
+
+# getters for the properties of output type "Complex" that `cone_property` supports;
+# they read results, so the property must be computed first
+const _COMPLEX_CONE_PROPERTIES = Dict{String,Function}(
+    "HilbertSeries" => cone -> _julia_series(cone, _hilbert_series(cone)),
+    "EhrhartSeries" => cone -> _julia_series(cone, _ehrhart_series(cone)),
+    "HilbertQuasiPolynomial" => cone -> _julia_quasipolynomial(_hilbert_series(cone)),
+    "EhrhartQuasiPolynomial" => cone -> _julia_quasipolynomial(_ehrhart_series(cone)),
+)
+
 function _flag_names(flags)
     names = String[]
     for (name, value) in pairs(flags)
@@ -204,9 +322,11 @@ Return `property` of `cone`, computing it first if it has not been computed yet.
 Property names are those listed by [`known_cone_properties`](@ref). The result is
 converted to an ordinary Julia object: `Matrix{BigInt}`, `Matrix{Float64}`,
 `Vector{BigInt}`, `BigInt`, `Rational{BigInt}`, `Float64`, `Int`, or `Bool`, depending
-on the property.
-Properties with other kinds of results, such as `Triangulation` or `HilbertSeries`,
-are not yet supported and throw an `ArgumentError`.
+on the property. The series `HilbertSeries` and `EhrhartSeries` are returned as
+[`Normaliz.HilbertSeries`](@ref), and `HilbertQuasiPolynomial` and
+`EhrhartQuasiPolynomial` as [`Normaliz.QuasiPolynomial`](@ref). Properties with other
+kinds of results, such as `Triangulation`, are not yet supported and throw an
+`ArgumentError`.
 
 `flags` are `Bool` keyword arguments, e.g. `DualMode = true`, exactly as for
 [`compute!`](@ref).
@@ -229,15 +349,20 @@ julia> cone_property(C, :EmbeddingDim)
 """
 function cone_property(cone::Cone, property::AbstractString; flags...)
     output_type = String(_cone_property_output_type(property))
-    output_type in _SUPPORTED_OUTPUT_TYPES || throw(ArgumentError(
-        "cone property $property has unsupported output type $output_type"))
+    complex_getter = get(_COMPLEX_CONE_PROPERTIES, property, nothing)
+    output_type in _SUPPORTED_OUTPUT_TYPES || complex_getter !== nothing ||
+        throw(ArgumentError(
+            "cone property $property has unsupported output type $output_type"))
     flag_names = _flag_names(flags)
     if !isempty(flag_names)
         # with DefaultMode, Normaliz may skip the property; the getter below would then
         # compute it without the flags
         property in _compute_skipped(cone, (property,), flag_names) && error(
             "Normaliz could not compute $property with flags $(join(flag_names, ", "))")
+    elseif complex_getter !== nothing
+        compute!(cone, property)
     end
+    complex_getter === nothing || return complex_getter(cone)
     if output_type == "Matrix"
         return _julia_cone_property(get_matrix_cone_property(cone, property))
     elseif output_type == "MatrixFloat"

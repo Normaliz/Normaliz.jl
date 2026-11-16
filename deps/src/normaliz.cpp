@@ -14,6 +14,7 @@
 #include <libnormaliz/matrix.h>
 
 using libnormaliz::Cone;
+using libnormaliz::HilbertSeries;
 using libnormaliz::Matrix;
 
 #ifdef ENFNORMALIZ
@@ -67,6 +68,16 @@ std::vector<std::string> cone_property_names(const libnormaliz::ConeProperties& 
         }
     }
     return names;
+}
+
+// the denominator of a Hilbert series as the degrees d_i of its factors (1 - t^d_i)
+std::vector<int64_t> denominator_degrees(const std::map<long, libnormaliz::denom_t>& denom)
+{
+    std::vector<int64_t> degrees;
+    for (long d : libnormaliz::to_vector(denom)) {
+        degrees.push_back(d);
+    }
+    return degrees;
 }
 
 std::string cone_property_output_type(const std::string& name)
@@ -214,6 +225,27 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                            [](WrappedT& mat) { return mat.nr_of_columns(); });
         });
 
+    // also the Ehrhart series, and their quasipolynomials
+    normaliz.add_type<HilbertSeries>("NmzHilbertSeries")
+        .method("_series_numerator", [](const HilbertSeries& hs) { return hs.getNum(); })
+        .method("_series_denominator", [](const HilbertSeries& hs) {
+            return denominator_degrees(hs.getDenom());
+        })
+        .method("_series_hsop_numerator", [](const HilbertSeries& hs) { return hs.getHSOPNum(); })
+        .method("_series_hsop_denominator", [](const HilbertSeries& hs) {
+            return denominator_degrees(hs.getHSOPDenom());
+        })
+        .method("_series_shift", [](const HilbertSeries& hs) {
+            return static_cast<int64_t>(hs.getShift());
+        })
+        // one row per residue class modulo the period, coefficients by degree
+        .method("_quasipolynomial", [](const HilbertSeries& hs) {
+            return Matrix<mpz_class>(hs.getHilbertQuasiPolynomial());
+        })
+        .method("_quasipolynomial_denominator", [](const HilbertSeries& hs) {
+            return hs.getHilbertQuasiPolynomialDenom();
+        });
+
 #if 0
     // TODO: should we enable the vector<vector<T>> interface? for now
     // I think it would be simpler if we just did all via Matrix<T>, but
@@ -306,6 +338,10 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                                    return C.getBooleanConeProperty(
                                        libnormaliz::toConeProperty(s));
                                });
+                wrapped.method("_hilbert_series",
+                               [](WrappedT& C) { return C.getHilbertSeries(); });
+                wrapped.method("_ehrhart_series",
+                               [](WrappedT& C) { return C.getEhrhartSeries(); });
                 wrapped.method("_computed_cone_properties", [](WrappedT& C) {
                     return cone_property_names(C.getIsComputed());
                 });
