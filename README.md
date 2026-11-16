@@ -17,6 +17,9 @@ To install this package, enter this into the Julia prompt:
 using Pkg; Pkg.develop(url="https://github.com/Normaliz/Normaliz.jl")
 ```
 
+The C++ part of the package is compiled when it is first loaded, which requires a
+C++ compiler and `cmake`.
+
 ## Documentation
 
 For more usage information, please [consult the documentation](https://normaliz.github.io/Normaliz.jl).
