@@ -193,7 +193,8 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                 Matrix<renf_elem_class>,
 #endif
                 Matrix<long>,
-                Matrix<long long>
+                Matrix<long long>,
+                Matrix<libnormaliz::nmz_float>
             >([](auto wrapped) {
             typedef typename decltype(wrapped)::type            WrappedT;
             typedef typename decltype(wrapped)::type::elem_type elemType;
@@ -259,6 +260,16 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                                [](WrappedT& C, const std::string &s) {
                                    return C.getMatrixConePropertyMatrix(
                                        libnormaliz::toConeProperty(s));
+                               });
+                wrapped.method("get_float_matrix_cone_property",
+                               [](WrappedT& C, const std::string &s) {
+                                   auto property = libnormaliz::toConeProperty(s);
+                                   // getFloatMatrixConePropertyMatrix returns the
+                                   // support hyperplanes for ExtremeRaysFloat
+                                   // (Normaliz 3.11.1)
+                                   if (property == libnormaliz::ConeProperty::ExtremeRaysFloat)
+                                       return C.getExtremeRaysFloatMatrix();
+                                   return C.getFloatMatrixConePropertyMatrix(property);
                                });
                 wrapped.method("get_vector_cone_property",
                                [](WrappedT& C, const std::string &s) {
