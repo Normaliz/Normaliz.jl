@@ -58,7 +58,8 @@ _string_vector(x) = String.(collect(x))
 """
     known_cone_properties() -> Vector{String}
 
-Return the names of cone properties known to Normaliz.
+Return the names of cone properties known to Normaliz, i.e. the properties that can be
+computed with [`compute!`](@ref) or [`cone_property`](@ref).
 
 # Examples
 
@@ -142,16 +143,24 @@ end
     compute!(cone::Cone, properties::Union{AbstractString,Symbol}...; flags...) -> Bool
 
 Compute `properties` for `cone` in a single Normaliz run, and return whether all of
-them could be computed. Retrieve the results with [`cone_property`](@ref).
+them were computed. The results are not returned: retrieve them afterwards with
+[`cone_property`](@ref), which does not compute them again.
 
-`flags` are Normaliz flags given as `Bool` keyword arguments named after them,
-e.g. `DualMode = true` to use the dual algorithm, or `BigInt = true` to compute with
-arbitrary precision. A flag set to `false` is ignored. Any flag known to Normaliz
-is accepted; see the Normaliz documentation for the full list. Normaliz throws an error
-for contradictory flags, such as `DualMode` together with `PrimalMode`.
+Use `compute!` to compute several properties together, which lets Normaliz share work
+between them instead of requesting them one by one. To compute and retrieve a single
+property, call `cone_property` directly.
 
-Normaliz does not recompute a property that has already been computed, so `flags`
-have no effect on properties for which [`is_computed`](@ref) is `true`.
+Property names are those listed by [`known_cone_properties`](@ref). `flags` select
+how Normaliz computes them, given as `Bool` keyword arguments named after the Normaliz
+flag, e.g. `DualMode = true` to use the dual algorithm, or `BigInt = true` to compute
+with arbitrary precision integers. Flags set to `false` are ignored. Any flag known to
+Normaliz is accepted; see the section "Computation goals and algorithmic variants" of
+the [Normaliz manual](https://github.com/Normaliz/Normaliz/blob/master/doc/Normaliz.pdf).
+Normaliz throws an error for unknown names and for contradictory flags, such as
+`DualMode` together with `PrimalMode`.
+
+Normaliz never recomputes a property, so `flags` have no effect on properties that
+have already been computed (see [`is_computed`](@ref)).
 
 # Examples
 
@@ -176,15 +185,16 @@ end
 """
     cone_property(cone::Cone, property::Union{AbstractString,Symbol}; flags...)
 
-Compute and return `property` for `cone`.
+Return `property` of `cone`, computing it first if it has not been computed yet.
 
-The result is converted to ordinary Julia objects where this is supported,
-for example `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
-`Rational{BigInt}`, `Float64`, `Int`, or `Bool`.
+Property names are those listed by [`known_cone_properties`](@ref). The result is
+converted to an ordinary Julia object: `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
+`Rational{BigInt}`, `Float64`, `Int`, or `Bool`, depending on the property.
+Properties with other kinds of results, such as `Triangulation` or `HilbertSeries`,
+are not yet supported and throw an `ArgumentError`.
 
-`flags` are Normaliz flags given as `Bool` keyword arguments, as for
-[`compute!`](@ref), e.g. `DualMode = true`. They have no effect if `property` has already
-been computed.
+`flags` are `Bool` keyword arguments, e.g. `DualMode = true`, exactly as for
+[`compute!`](@ref). They have no effect if `property` has already been computed.
 
 # Examples
 
