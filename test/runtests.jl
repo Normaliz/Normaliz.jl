@@ -238,6 +238,15 @@ end
   @test occursin("Complex", err.value.msg)
 end
 
+@testset "longlong cone properties are Julia objects" begin
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1], type = :longlong)
+  @test Normaliz.cone_property(yy, :HilbertBasis) isa Matrix{Int64}
+  @test Normaliz.cone_property(yy, :HilbertBasis) == [1 2 ; 3 5]
+  @test Normaliz.cone_property(yy, :Grading) isa Vector{Int64}
+  @test Normaliz.cone_property(yy, :Grading) == [1, 1]
+  @test Normaliz.cone_property(yy, :GradingDenom) === 1
+end
+
 @testset "compute! with flags" begin
   for type in (:gmp, :longlong)
     yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1], type)
