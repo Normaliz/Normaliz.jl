@@ -313,6 +313,10 @@ JLCXX_MODULE define_module_normaliz(jlcxx::Module& normaliz)
                     // the goals it skipped
                     return cone_property_names(C.compute(properties).goals());
                 });
+                // unlike the EmbeddingDim property, this never computes
+                wrapped.method("_embedding_dim", [](WrappedT& C) {
+                    return static_cast<int64_t>(C.getEmbeddingDim());
+                });
             });
 
     normaliz.method("_known_cone_properties", []() {

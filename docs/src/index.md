@@ -30,7 +30,7 @@ after Normaliz input types, and its properties are retrieved with
 julia> using Normaliz
 
 julia> C = Cone(; cone = [1 2; 3 5], grading = [1 1])
-Normaliz cone
+Normaliz cone of embedding dimension 2
 
 julia> cone_property(C, :HilbertBasis)
 2×2 Matrix{BigInt}:

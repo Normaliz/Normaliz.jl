@@ -331,6 +331,18 @@ end
   @test String(Normaliz._cone_property_output_type("DefaultMode")) == "Void"
 end
 
+@testset "show" begin
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5])
+  @test sprint(show, yy) == "Normaliz cone of embedding dimension 2"
+  # showing a cone computes nothing
+  @test isempty(Normaliz.computed_cone_properties(yy))
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], type = :longlong)
+  @test sprint(show, yy) == "Normaliz cone of embedding dimension 2"
+  # inhomogeneous input gains a homogenizing coordinate
+  yy = Normaliz.Cone(; inhom_inequalities = [1 0 0; 0 1 0; 1 1 -1])
+  @test sprint(show, yy) == "Normaliz cone of embedding dimension 3"
+end
+
 # TODO: reactivate these tests once Renf support is back
 #@testset "basic renf test" begin
 #  r = Normaliz.RenfClass("a4-5a2+5", "a", "1.9021+/-0.01")
