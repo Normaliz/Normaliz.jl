@@ -316,6 +316,23 @@ end
   @test occursin("could not compute Multiplicity", sprint(showerror, err.value))
 end
 
+@testset "float matrix properties" begin
+  yy = Normaliz.Cone(; cone = [1 2 ; 3 5], grading = [1 1])
+  rays = Normaliz.cone_property(yy, :ExtremeRays)
+  rays_float = Normaliz.cone_property(yy, :ExtremeRaysFloat)
+  @test rays_float isa Matrix{Float64}
+  # rows are the extreme rays, up to order and positive scaling
+  normalize(M) = sortslices(M ./ sum(M; dims = 2); dims = 1)
+  @test normalize(rays_float) ≈ normalize(Float64.(rays))
+  hyps = Normaliz.cone_property(yy, :SupportHyperplanes)
+  @test Normaliz.cone_property(yy, :SuppHypsFloat) isa Matrix{Float64}
+  @test size(Normaliz.cone_property(yy, :SuppHypsFloat)) == size(hyps)
+
+  yy = Normaliz.Cone(; vertices = [0 0 1; 2 0 1; 0 3 1])
+  @test sortslices(Normaliz.cone_property(yy, :VerticesFloat); dims = 1) ==
+        Float64[0 0 1; 0 3 1; 2 0 1]
+end
+
 @testset "cone property output types" begin
   @test String(Normaliz._cone_property_output_type("HilbertBasis")) == "Matrix"
   @test String(Normaliz._cone_property_output_type("ExtremeRaysFloat")) == "MatrixFloat"

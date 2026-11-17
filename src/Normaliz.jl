@@ -124,6 +124,7 @@ _julia_cone_property(x::NmzInteger) = convert(BigInt, x)
 _julia_cone_property(x::NmzRational) = convert(Rational{BigInt}, x)
 _julia_cone_property(x::NmzMatrix{NmzInteger}) = Matrix{BigInt}(x)
 _julia_cone_property(x::NmzMatrix{NmzRational}) = Matrix{Rational{BigInt}}(x)
+_julia_cone_property(x::NmzMatrix{Float64}) = Matrix{Float64}(x)
 _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzInteger}) =
     convert.(BigInt, collect(x))
 _julia_cone_property(x::CxxWrap.StdLib.StdVector{NmzRational}) =
@@ -192,7 +193,7 @@ function _compute_skipped(cone::Cone, properties, flag_names::Vector{String})
 end
 
 # Normaliz output types that `cone_property` converts to Julia objects
-const _SUPPORTED_OUTPUT_TYPES = ("Matrix", "Vector", "Integer", "GMPInteger",
+const _SUPPORTED_OUTPUT_TYPES = ("Matrix", "MatrixFloat", "Vector", "Integer", "GMPInteger",
                                   "Rational", "Float", "MachineInteger", "Bool")
 
 """
@@ -201,8 +202,9 @@ const _SUPPORTED_OUTPUT_TYPES = ("Matrix", "Vector", "Integer", "GMPInteger",
 Return `property` of `cone`, computing it first if it has not been computed yet.
 
 Property names are those listed by [`known_cone_properties`](@ref). The result is
-converted to an ordinary Julia object: `Matrix{BigInt}`, `Vector{BigInt}`, `BigInt`,
-`Rational{BigInt}`, `Float64`, `Int`, or `Bool`, depending on the property.
+converted to an ordinary Julia object: `Matrix{BigInt}`, `Matrix{Float64}`,
+`Vector{BigInt}`, `BigInt`, `Rational{BigInt}`, `Float64`, `Int`, or `Bool`, depending
+on the property.
 Properties with other kinds of results, such as `Triangulation` or `HilbertSeries`,
 are not yet supported and throw an `ArgumentError`.
 
@@ -238,6 +240,8 @@ function cone_property(cone::Cone, property::AbstractString; flags...)
     end
     if output_type == "Matrix"
         return _julia_cone_property(get_matrix_cone_property(cone, property))
+    elseif output_type == "MatrixFloat"
+        return _julia_cone_property(get_float_matrix_cone_property(cone, property))
     elseif output_type == "Vector"
         return _julia_cone_property(get_vector_cone_property(cone, property))
     elseif output_type == "Integer"
@@ -260,6 +264,8 @@ cone_property(cone::Cone, property::Symbol; flags...) =
 
 get_matrix_cone_property(cone, property::Symbol) =
     get_matrix_cone_property(cone, String(property))
+get_float_matrix_cone_property(cone, property::Symbol) =
+    get_float_matrix_cone_property(cone, String(property))
 get_vector_cone_property(cone, property::Symbol) =
     get_vector_cone_property(cone, String(property))
 get_integer_cone_property(cone, property::Symbol) =
