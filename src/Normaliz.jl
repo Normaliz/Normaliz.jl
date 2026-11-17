@@ -156,8 +156,11 @@ julia> using Normaliz
 
 julia> C = Cone(; polytope = [0 0; 2 0; 0 3]);
 
-julia> cone_property(C, :HilbertSeries)
-Normaliz.HilbertSeries(BigInt[1, 4, 1], [1, 1, 1], 0)
+julia> hs = cone_property(C, :HilbertSeries)
+(1 + 4t + t^2) / (1 - t)^3
+
+julia> hs.numerator, hs.denominator, hs.shift
+(BigInt[1, 4, 1], [1, 1, 1], 0)
 ```
 """
 struct HilbertSeries
@@ -171,12 +174,57 @@ Base.:(==)(a::HilbertSeries, b::HilbertSeries) =
 Base.hash(a::HilbertSeries, h::UInt) =
     hash(a.numerator, hash(a.denominator, hash(a.shift, hash(HilbertSeries, h))))
 
+# (coefficient, exponent) pairs of the nonzero terms, by increasing exponent
+_nonzero_terms(coefficients, shift = 0) =
+    [(c, e - 1 + shift) for (e, c) in enumerate(coefficients) if !iszero(c)]
+
+# prints the polynomial with the given terms, in the given order
+function _print_polynomial(io::IO, terms, var::String)
+    isempty(terms) && return print(io, "0")
+    for (i, (c, e)) in enumerate(terms)
+        if i == 1
+            c < 0 && print(io, "-")
+        else
+            print(io, c < 0 ? " - " : " + ")
+        end
+        (isone(abs(c)) && e != 0) || print(io, abs(c))
+        e == 0 && continue
+        print(io, var)
+        e == 1 || print(io, "^", e)
+    end
+end
+
+function Base.show(io::IO, hs::HilbertSeries)
+    terms = _nonzero_terms(hs.numerator, hs.shift)
+    length(terms) > 1 && print(io, "(")
+    _print_polynomial(io, terms, "t")
+    length(terms) > 1 && print(io, ")")
+    isempty(hs.denominator) && return
+
+    print(io, " / ")
+    degrees = sort(unique(hs.denominator))
+    length(degrees) > 1 && print(io, "(")
+    for d in degrees
+        print(io, d == 1 ? "(1 - t)" : "(1 - t^$d)")
+        e = count(==(d), hs.denominator)
+        e == 1 || print(io, "^", e)
+    end
+    length(degrees) > 1 && print(io, ")")
+end
+
 """
     Normaliz.QuasiPolynomial
 
 A Hilbert or Ehrhart quasipolynomial, as returned by [`cone_property`](@ref) for
-`HilbertQuasiPolynomial` and `EhrhartQuasiPolynomial`. It agrees with the Hilbert or
-Ehrhart function for all sufficiently large arguments; `q(n)` evaluates it at `n`.
+`HilbertQuasiPolynomial` and `EhrhartQuasiPolynomial`; `q(n)` evaluates it at `n`.
+
+A quasipolynomial of period ``p`` is a function ``q`` on the integers given by
+polynomials ``q_0, …, q_{p-1}``, with ``q(n) = q_k(n)`` whenever ``n ≡ k \\pmod p``.
+The Hilbert function of a graded monoid, which counts its elements of degree ``n``, is
+a quasipolynomial for all sufficiently large ``n``; so is the Ehrhart function of a
+rational polytope, which counts the lattice points in its ``n``-th dilation. The period
+divides the least common multiple of the denominator degrees of the
+[`Normaliz.HilbertSeries`](@ref).
 
 # Fields
 
@@ -188,7 +236,7 @@ Ehrhart function for all sufficiently large arguments; `q(n)` evaluates it at `n
 # Examples
 
 The ``n``-th dilation of the triangle with vertices ``(0,0)``, ``(1/2,0)``,
-``(0,1/2)`` contains ``\binom{⌊n/2⌋+2}{2}`` lattice points:
+``(0,1/2)`` contains ``\\binom{⌊n/2⌋+2}{2}`` lattice points:
 
 ```jldoctest
 julia> using Normaliz
@@ -196,7 +244,9 @@ julia> using Normaliz
 julia> C = Cone(; vertices = [0 0 1; 1 0 2; 0 1 2]);
 
 julia> q = cone_property(C, :EhrhartQuasiPolynomial)
-Normaliz.QuasiPolynomial(BigInt[8 6 1; 3 4 1], 8)
+Quasipolynomial of period 2:
+  (n^2 + 6n + 8)/8  for n ≡ 0 mod 2
+  (n^2 + 4n + 3)/8  for n ≡ 1 mod 2
 
 julia> q.(0:5)
 6-element Vector{Rational{BigInt}}:
@@ -221,6 +271,35 @@ Base.hash(a::QuasiPolynomial, h::UInt) =
 function (q::QuasiPolynomial)(n::Integer)
     coefficients = q.coefficients[mod(n, size(q.coefficients, 1)) + 1, :]
     return evalpoly(BigInt(n), coefficients) // q.denominator
+end
+
+_period(q::QuasiPolynomial) = size(q.coefficients, 1)
+
+# the polynomial for arguments congruent to k, over the common denominator
+function _component_string(q::QuasiPolynomial, k::Int)
+    terms = reverse(_nonzero_terms(q.coefficients[k + 1, :]))
+    polynomial = sprint(_print_polynomial, terms, "n")
+    isone(q.denominator) && return polynomial
+    length(terms) > 1 && (polynomial = "($polynomial)")
+    return "$polynomial/$(q.denominator)"
+end
+
+function Base.show(io::IO, q::QuasiPolynomial)
+    p = _period(q)
+    p == 1 && return print(io, _component_string(q, 0))
+    print(io, join(("$(_component_string(q, k)) if n ≡ $k" for k in 0:p-1), ", "))
+    print(io, " (mod $p)")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", q::QuasiPolynomial)
+    p = _period(q)
+    p == 1 && return show(io, q)
+    components = [_component_string(q, k) for k in 0:p-1]
+    width = maximum(length, components)
+    print(io, "Quasipolynomial of period $p:")
+    for (k, component) in enumerate(components)
+        print(io, "\n  ", rpad(component, width), "  for n ≡ ", k - 1, " mod ", p)
+    end
 end
 
 function _julia_series(cone::Cone, series)

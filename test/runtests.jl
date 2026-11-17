@@ -328,6 +328,22 @@ end
 
   @test hash(Normaliz.HilbertSeries([1], [3, 8], 0)) ==
         hash(Normaliz.HilbertSeries([1], [3, 8], 0))
+
+  # printing
+  H = Normaliz.HilbertSeries
+  @test sprint(show, H([1, 4, 1], [1, 1, 1], 0)) == "(1 + 4t + t^2) / (1 - t)^3"
+  @test sprint(show, H([1], [3, 8], 0)) == "1 / ((1 - t^3)(1 - t^8))"
+  @test sprint(show, H([2, -3], [1, 1, 2], 2)) == "(2t^2 - 3t^3) / ((1 - t)^2(1 - t^2))"
+  @test sprint(show, H([1], Int[], 0)) == "1"
+  Q = Normaliz.QuasiPolynomial
+  @test sprint(show, Q(BigInt[1 3 3], 1)) == "3n^2 + 3n + 1"
+  @test sprint(show, Q(BigInt[0 0 3], 8)) == "3n^2/8"
+  q = Q(BigInt[8 6 1; 3 4 1], 8)
+  @test sprint(show, q) == "(n^2 + 6n + 8)/8 if n ≡ 0, (n^2 + 4n + 3)/8 if n ≡ 1 (mod 2)"
+  @test sprint(show, MIME("text/plain"), q) == """
+    Quasipolynomial of period 2:
+      (n^2 + 6n + 8)/8  for n ≡ 0 mod 2
+      (n^2 + 4n + 3)/8  for n ≡ 1 mod 2"""
 end
 
 @testset "cone_property with flags" begin
