@@ -94,3 +94,10 @@ is_computed
 computed_cone_properties
 known_cone_properties
 ```
+
+### Series and quasipolynomials
+
+```@docs
+Normaliz.HilbertSeries
+Normaliz.QuasiPolynomial
+```
