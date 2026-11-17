@@ -119,6 +119,10 @@ is_computed(cone::Cone, property::AbstractString) = _is_computed(cone, property)
 is_computed(cone::Cone, property::Symbol) = is_computed(cone, String(property))
 
 _julia_cone_property(x) = x
+# results of Cone<long long>; CxxLongLong is Int64 except where int64_t is long (Linux)
+_julia_cone_property(x::NmzMatrix{CxxWrap.CxxLongLong}) = Matrix{Int64}(x)
+_julia_cone_property(x::CxxWrap.StdLib.StdVector{CxxWrap.CxxLongLong}) =
+    Vector{Int64}(collect(x))
 _julia_cone_property(x::NmzInteger) = convert(BigInt, x)
 _julia_cone_property(x::NmzRational) = convert(Rational{BigInt}, x)
 _julia_cone_property(x::NmzMatrix{NmzInteger}) = Matrix{BigInt}(x)
@@ -344,7 +348,9 @@ Construct a Normaliz cone from Julia matrices.
 Inputs use Normaliz input names as keyword arguments or as `Symbol` keys in a
 dictionary, for example `:cone` and `:grading`. Matrix entries must be
 convertible to rational numbers. By default, Normaliz uses arbitrary precision
-integer arithmetic; pass `type = :longlong` to use 64-bit integer arithmetic.
+integer arithmetic; pass `type = :longlong` to use 64-bit integer arithmetic, which
+also makes integer matrices, vectors and most integers returned by
+[`cone_property`](@ref) `Int64` instead of `BigInt`.
 
 # Examples
 
